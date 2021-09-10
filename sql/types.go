@@ -13,6 +13,7 @@ var Types = map[string]int{
 	"date":      -1,
 	"time":      -1,
 	"timestamp": -1,
+	"float":     -1,
 }
 
 var TypeDict = map[string]string{
