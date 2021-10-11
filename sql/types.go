@@ -14,6 +14,7 @@ var Types = map[string]int{
 	"time":      -1,
 	"timestamp": -1,
 	"float":     -1,
+	"json":      -1,
 }
 
 var TypeDict = map[string]string{
