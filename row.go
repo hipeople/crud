@@ -50,17 +50,7 @@ func GetRowValuesOf(st interface{}) ([]*RowValue, error) {
 func CollectRows(st interface{}, rows []*RowValue) ([]*RowValue, error) {
 	iter := NewFieldIteration(st)
 	for iter.Next() {
-		if iter.IsEmbeddedStruct() {
-			if _rows, err := CollectRows(iter.ValueField().Interface(), rows); err != nil {
-				return nil, err
-			} else {
-				rows = _rows
-			}
-			continue
-		}
-
 		sqlOptions, err := iter.SQLOptions()
-
 		if err != nil {
 			return nil, err
 		}
