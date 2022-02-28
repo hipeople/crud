@@ -3,7 +3,7 @@ package crud_test
 import (
 	"testing"
 
-	"github.com/azer/crud"
+	"github.com/azer/crud/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,7 +11,7 @@ func TestNewTable(t *testing.T) {
 	table, err := crud.NewTable(UserProfile{})
 	assert.Nil(t, err)
 	assert.Equal(t, table.Name, "UserProfile")
-	assert.Equal(t, table.SQLName, "user_profile")
+	assert.Equal(t, table.SQLName, "user_profiles")
 	assert.Equal(t, len(table.Fields), 6)
 	assert.Equal(t, table.Fields[0].Name, "Id")
 	assert.Equal(t, table.Fields[0].SQL.Name, "id")
@@ -155,6 +155,13 @@ func TestReadTableName(t *testing.T) {
 	assert.Equal(t, sqlName, "yolo")
 }
 
+func TestMixed(t *testing.T) {
+	table, err := crud.NewTable(Mixed{})
+	assert.Nil(t, err)
+	assert.Equal(t, table.Name, "Mixed")
+	assert.Equal(t, table.SQLName, "__mixed__")
+}
+
 func TestReadingTableColumns(t *testing.T) {
 	columns, err := crud.ReadTableColumns(UserProfile{})
 
@@ -191,11 +198,4 @@ func TestReadingTableColumnsFromList(t *testing.T) {
 	assert.Equal(t, columns[3], "email")
 	assert.Equal(t, columns[4], "attachment")
 	assert.Equal(t, columns[5], "modified_col")
-}
-
-func TestMixed(t *testing.T) {
-	table, err := crud.NewTable(Mixed{})
-	assert.Nil(t, err)
-	assert.Equal(t, table.Name, "Mixed")
-	assert.Equal(t, table.SQLName, "__mixed__")
 }

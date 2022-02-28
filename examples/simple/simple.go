@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/azer/crud"
-	_ "github.com/go-sql-driver/mysql"
 	"os"
+
+	"github.com/azer/crud/v2"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type User struct {
@@ -33,7 +34,7 @@ func main() {
 	}
 
 	copy := User{}
-	if err := DB.Read(&copy, "WHERE first_name='Azer'"); err != nil {
+	if err := DB.Read(&copy, "SELECT * FROM users WHERE first_name='Azer'"); err != nil {
 		panic(err)
 	}
 

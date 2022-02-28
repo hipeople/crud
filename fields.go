@@ -1,7 +1,7 @@
 package crud
 
 import (
-	"github.com/azer/crud/sql"
+	"github.com/azer/crud/v2/sql"
 )
 
 type Field struct {
@@ -10,6 +10,7 @@ type Field struct {
 	SQL   *sql.Options
 }
 
+// Get DB fields of any valid struct given
 func GetFieldsOf(st interface{}) ([]*Field, error) {
 	fields, err := CollectFields(st, []*Field{})
 	if err != nil {
@@ -22,6 +23,15 @@ func GetFieldsOf(st interface{}) ([]*Field, error) {
 func CollectFields(st interface{}, fields []*Field) ([]*Field, error) {
 	iter := NewFieldIteration(st)
 	for iter.Next() {
+		if iter.IsEmbeddedStruct() {
+			if _fields, err := CollectFields(iter.ValueField().Interface(), fields); err != nil {
+				return nil, err
+			} else {
+				fields = _fields
+			}
+			continue
+		}
+
 		sqlOptions, err := iter.SQLOptions()
 
 		if err != nil {

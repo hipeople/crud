@@ -1,11 +1,12 @@
 package crud
 
 import (
-	"github.com/azer/crud/meta"
-	"github.com/azer/crud/sql"
-	"github.com/azer/snakecase"
+	"github.com/azer/crud/v2/meta"
+	"github.com/azer/crud/v2/sql"
 )
 
+// Create an internal representation of a database table, including its fields from given
+// struct record
 func NewTable(any interface{}) (*Table, error) {
 	if meta.IsSlice(any) {
 		any = meta.CreateElement(any).Interface()
@@ -99,24 +100,10 @@ func (table *Table) SQLUpdateValueSet() []interface{} {
 
 // Return struct name and SQL table name
 func ReadTableName(any interface{}) (string, string) {
-	if meta.IsSlice(any) {
-		any = meta.CreateElement(any).Interface()
-	}
-
-	return readTableName(any)
+	return meta.TypeNameOf(any), SQLTableNameOf(any)
 }
 
-func readTableName(any interface{}) (string, string) {
-	name := meta.TypeNameOf(any)
-	sqlName := snakecase.SnakeCase(name)
-
-	if customTableName, ok := lookupCustomTableName(any); ok {
-		sqlName = customTableName
-	}
-
-	return name, sqlName
-}
-
+// Return table columns for given struct, pointer to struct or slice of structs.
 func ReadTableColumns(any interface{}) ([]string, error) {
 	if meta.IsSlice(any) {
 		any = meta.CreateElement(any).Interface()
@@ -134,27 +121,4 @@ func ReadTableColumns(any interface{}) ([]string, error) {
 	}
 
 	return columns, nil
-}
-
-func LookupCustomTableName(any interface{}) (string, bool) {
-	if meta.IsSlice(any) {
-		any = meta.CreateElement(any).Interface()
-	}
-
-	return lookupCustomTableName(any)
-}
-
-func lookupCustomTableName(any interface{}) (string, bool) {
-	fields, err := GetFieldsOf(any)
-	if err != nil {
-		return "", false
-	}
-
-	for _, f := range fields {
-		if len(f.SQL.TableName) > 0 {
-			return f.SQL.TableName, true
-		}
-	}
-
-	return "", false
 }

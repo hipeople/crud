@@ -67,6 +67,7 @@ func TestEmbedding(t *testing.T) {
 	assert.Equal(t, foo.Id, 0)
 	err := DB.CreateAndRead(&foo)
 	assert.Nil(t, err)
+
 	assert.Equal(t, foo.Id, 1)
 	assert.Equal(t, foo.APIKey, "hi")
 	assert.Equal(t, foo.Beast, "span eggs")

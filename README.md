@@ -2,49 +2,39 @@
 
 A minimalistic relational database library for Go.
 
-Features:
-* Fast.
-* Well tested.
-* Being used [in production since 2015](#apps-using-crud).
-* Internal logging with timers, [can be configured for streaming slow queries into Slack](https://kodfabrik.com/journal/monitoring-slow-sql-queries-via-slack/#crud).
-
-Manual:
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
 
 - [Install](#install)
 - [Initialize](#initialize)
 - [Define](#define)
-    - [Reset Tables](#reset-tables)
-    - [SQL Options](#sql-options)
-    - [Create](#create)
-    - [CreateAndRead](#createandread)
-    - [Read](#read)
-        - [Reading multiple rows:](#reading-multiple-rows)
-        - [Scanning to custom values:](#scanning-to-custom-values)
-    - [Update](#update)
-    - [Delete](#delete)
-    - [Transactions](#transactions)
-    - [Logs](#logs)
-    - [Custom Queries](#custom-queries)
-    - [Why another ORMish library for Go?](#why-another-ormish-library-for-go)
-    - [Apps Using CRUD](#apps-using-crud)
-    - [What's Missing?](#whats-missing)
-    - [LICENSE](#license)
+- [Create](#create)
+- [CreateAndRead](#createandread)
+- [Read](#read)
+    - [Reading multiple rows:](#reading-multiple-rows)
+    - [Scanning to custom values:](#scanning-to-custom-values)
+- [Update](#update)
+- [Delete](#delete)
+- [Contexts](#contexts)
+- [Transactions](#transactions)
+- [Logs](#logs)
+- [Custom Queries](#custom-queries)
+- [What's Missing?](#whats-missing)
+- [LICENSE](#license)
 
 <!-- markdown-toc end -->
 
 ## Install
 
 ```bash
-$ go get github.com/azer/crud
+$ go get github.com/azer/crud/v2
 ```
 
 ## Initialize
 
 ```go
 import (
-  "github.com/azer/crud"
+  "github.com/azer/crud/v2"
   _ "github.com/go-sql-driver/mysql"
 )
 
@@ -179,7 +169,7 @@ fmt.Println(user.Name)
 ```go
 users := []*User{}
 
-err := DB.Read(&users)
+err := DB.Read(&users, "SELECT * FROM users")
 // => SELECT * FROM users
 
 fmt.Println(len(users))
@@ -225,6 +215,14 @@ err := DB.Delete(&User{
 })
 ```
 
+## Contexts
+
+Use `WithContext` method to get a DB client with context. Here is an example;
+
+```go
+db := DB.WithContext(context.Background())
+```
+
 ## Transactions
 
 Use `Begin` method of a `crud.DB` instance to create a new transaction. Each transaction will provide you following methods;
@@ -234,12 +232,13 @@ Use `Begin` method of a `crud.DB` instance to create a new transaction. Each tra
 * Exec
 * Query
 * Create
+* CreateAndRead
 * Read
 * Update
 * Delete
 
 ```go
-tx, err := DB.Begin()
+tx, err := DB.Begin(context.Background())
 
 err := tx.Create(&User{
   Name: "yolo"
@@ -252,6 +251,13 @@ err := tx.Delete(&User{
 err := tx.Commit()
 ```
 
+CRUD generates an ID for each transaction, and uses that for logging queries and the state of the transactions. You can override transaction IDs in some use cases such as having same IDs and ID field keys with your Rest framework generating request IDs;
+
+```go
+tx.Id = requestId
+tx.IdKey = "requestId"
+```
+
 ## Logs
 
 If you want to see crud's internal logs, specify `crud` in the `LOG` environment variable when you run your app. For example;
@@ -259,8 +265,6 @@ If you want to see crud's internal logs, specify `crud` in the `LOG` environment
 ```
 $ LOG=crud go run myapp.go
 ```
-
-[(More info about how crud's logging work)](http://github.com/azer/logger)
 
 ## Custom Queries
 
@@ -274,33 +278,12 @@ result, err := DB.Query("DROP DATABASE yolo") // or .Exec
 DATABASE_URL="?" go test ./...
 ```
 
-## Why another ORMish library for Go?
-
-* Simplicity, taking more advantage of `reflect` library to keep the API simple.
-* Building less things with more complete abstractions
-* Handling errors in an idiomatic way
-* Good test coverage
-* Modular & reusable code
-* Making less unsafe assumptions. e.g: not mapping structs to SQL rows by column index.
-* Complete & tested [SQL Options](#sql-options)
-
-## Apps Using CRUD
-
-* [Kozmos](http://getkozmos.com)
-* [MultiplayerChess.com](http://multiplayerchess.com)
-* [Listen Paradise](http://github.com/azer/radio-paradise).
-
 ## What's Missing?
 
-* **Migration:** We need a sophisticated solution for adding / removing columns when user changes the structs.
-* **Relationships:** This was intentionally avoided. Can be considered if there is a clean way to implement it.
-* **Testing Transactions:** Transactions work as expected but there is a sync bug in the test causing failure. It needs to be fixed.
-* **Comments:** I rarely comment my code.
 * **Hooks:** I'm not sure if this is needed, but worths to consider.
 * **Foreign Keys:** [*](https://dev.mysql.com/doc/refman/5.7/en/create-table-foreign-keys.html)
-* **Query Builder:** Building SQL queries programmatically is useful.
 * **Make UTF-8 Default:** Looks like the default charset is not UTF8.
 
 ## LICENSE
 
-[WTFPL](http://www.wtfpl.net/)
+[MIT License](https://github.com/azer/crud/blob/master/COPYING)
