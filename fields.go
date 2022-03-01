@@ -23,15 +23,6 @@ func GetFieldsOf(st interface{}) ([]*Field, error) {
 func CollectFields(st interface{}, fields []*Field) ([]*Field, error) {
 	iter := NewFieldIteration(st)
 	for iter.Next() {
-		if iter.IsEmbeddedStruct() {
-			if _fields, err := CollectFields(iter.ValueField().Interface(), fields); err != nil {
-				return nil, err
-			} else {
-				fields = _fields
-			}
-			continue
-		}
-
 		sqlOptions, err := iter.SQLOptions()
 
 		if err != nil {
