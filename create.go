@@ -3,10 +3,11 @@ package crud
 import (
 	stdsql "database/sql"
 	"fmt"
-	"github.com/azer/crud/sql"
+
+	"github.com/azer/crud/v2/sql"
 )
 
-func CreateAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) {
+func createAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) {
 	row, err := NewRow(record)
 	if err != nil {
 		return nil, err
@@ -23,13 +24,13 @@ func CreateAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) 
 	return exec(sql.InsertQuery(row.SQLTableName, columns), values...)
 }
 
-func Create(exec ExecFn, record interface{}) error {
-	_, err := CreateAndGetResult(exec, record)
+func create(exec ExecFn, record interface{}) error {
+	_, err := createAndGetResult(exec, record)
 	return err
 }
 
-func CreateAndRead(exec ExecFn, query QueryFn, record interface{}) error {
-	result, err := CreateAndGetResult(exec, record)
+func createAndRead(exec ExecFn, query QueryFn, record interface{}) error {
+	result, err := createAndGetResult(exec, record)
 	if err != nil {
 		return err
 	}
@@ -40,16 +41,15 @@ func CreateAndRead(exec ExecFn, query QueryFn, record interface{}) error {
 	}
 
 	table, err := NewTable(record)
-
 	if err != nil {
 		// this is a bad design choice made assuming that it'll never happen.
 		return err
 	}
 
 	params := []interface{}{
-		fmt.Sprintf("WHERE %s = ?", table.PrimaryKeyField().SQL.Name),
+		fmt.Sprintf("SELECT * FROM %s WHERE %s = ?", table.SQLName, table.PrimaryKeyField().SQL.Name),
 		id,
 	}
 
-	return Read(query, record, params)
+	return read(query, record, params)
 }

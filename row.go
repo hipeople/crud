@@ -38,6 +38,9 @@ func NewRow(st interface{}) (*Row, error) {
 	}, nil
 }
 
+// Scans given struct record and returns a list of crud.Row instances for each
+// struct field. It's useful for extracting values and corresponding SQL meta information
+// from structs representing database tables.
 func GetRowValuesOf(st interface{}) ([]*RowValue, error) {
 	fields, err := CollectRows(st, []*RowValue{})
 	if err != nil {
@@ -51,6 +54,7 @@ func CollectRows(st interface{}, rows []*RowValue) ([]*RowValue, error) {
 	iter := NewFieldIteration(st)
 	for iter.Next() {
 		sqlOptions, err := iter.SQLOptions()
+
 		if err != nil {
 			return nil, err
 		}

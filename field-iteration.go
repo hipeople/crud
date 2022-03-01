@@ -3,11 +3,14 @@ package crud
 import (
 	"reflect"
 
-	"github.com/azer/crud/meta"
-	"github.com/azer/crud/sql"
+	"github.com/azer/crud/v2/meta"
+	"github.com/azer/crud/v2/sql"
 	"github.com/azer/snakecase"
 )
 
+// Take any kind of struct and return a FieldIteration instance
+// which helps walking the fields of the given struct one by one
+// reading its name, value and SQL options
 func NewFieldIteration(st interface{}) *FieldIteration {
 	rvalue, rtype := meta.Get(st)
 
