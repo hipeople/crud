@@ -24,7 +24,6 @@ func CollectFields(st interface{}, fields []*Field) ([]*Field, error) {
 	iter := NewFieldIteration(st)
 	for iter.Next() {
 		sqlOptions, err := iter.SQLOptions()
-
 		if err != nil {
 			return nil, err
 		}

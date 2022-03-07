@@ -9,12 +9,13 @@ var Types = map[string]int{
 	"int":       11,
 	"bigint":    20,
 	"varchar":   255,
-	"text":      -1,
-	"date":      -1,
-	"time":      -1,
-	"timestamp": -1,
-	"float":     -1,
-	"json":      -1,
+	"text":      0,
+	"date":      0,
+	"time":      0,
+	"timestamp": 0,
+	"float":     0,
+	"json":      0,
+	"enum":      0,
 }
 
 var TypeDict = map[string]string{
