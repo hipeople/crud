@@ -1,8 +1,10 @@
 package crud_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreate(t *testing.T) {
@@ -51,36 +53,14 @@ func TestCreateEmpty(t *testing.T) {
 	DB.DropTables(UserProfile{})
 }
 
-func TestEmbedding(t *testing.T) {
-	DB.ResetTables(EmbeddedFoo{})
-
-	foo := EmbeddedFoo{
-		Foo: Foo{
-			APIKey: "hi",
-			YOLO:   true,
-			Beast:  "span eggs",
-		},
-		Span: 123,
-		Eggs: "yoo",
-	}
-
-	assert.Equal(t, foo.Id, 0)
-	err := DB.CreateAndRead(&foo)
-	assert.Nil(t, err)
-
-	assert.Equal(t, foo.Id, 1)
-	assert.Equal(t, foo.APIKey, "hi")
-	assert.Equal(t, foo.Beast, "span eggs")
-
-	DB.DropTables(EmbeddedFoo{})
-}
-
 func TestCreatingRenamedTableRow(t *testing.T) {
 	DB.ResetTables(Post{})
 
 	p := Post{
-		Title: "Foo",
-		Text:  "bar",
+		Title:     "Foo",
+		Text:      "bar",
+		Category:  PostCategoryDrink,
+		CreatedAt: time.Now(),
 	}
 
 	assert.Equal(t, p.Id, 0)

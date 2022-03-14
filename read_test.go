@@ -170,7 +170,7 @@ func TestUnexistingFields(t *testing.T) {
 	assert.Nil(t, CreateUserProfiles())
 
 	nova := UserProfile{}
-	err := DB.Read(&nova, "SELECT u.*, COUNT(u.id) as ucount FROM user_profiles u WHERE name=?", "Nova")
+	err := DB.Read(&nova, "SELECT u.*, COUNT(u.id) as ucount FROM user_profiles u WHERE name=? GROUP BY u.id", "Nova")
 	assert.Nil(t, err)
 	assert.Equal(t, nova.Name, "Nova")
 	assert.Equal(t, nova.Bio, "Photographer")

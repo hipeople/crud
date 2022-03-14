@@ -1,6 +1,7 @@
 package crud
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/azer/crud/v2/meta"
@@ -69,7 +70,9 @@ func (iteration *FieldIteration) SQLOptions() (*sql.Options, error) {
 		}
 
 		result.Type = sqlType
-		result.Length = sql.Types[result.Type]
+		if length := sql.Types[result.Type]; length != 0 {
+			result.TypeArg = fmt.Sprint(length)
+		}
 	}
 
 	return result, nil

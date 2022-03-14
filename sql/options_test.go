@@ -12,7 +12,7 @@ func TestAllOptions(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, o.Name, "id")
 	assert.Equal(t, o.Type, "varchar")
-	assert.Equal(t, o.Length, 255)
+	assert.Equal(t, o.TypeArg, "255")
 	assert.Equal(t, o.AutoIncrement, 25)
 	assert.True(t, o.IsAutoIncrementing)
 	assert.Equal(t, o.IsPrimaryKey, true)
@@ -33,7 +33,7 @@ func TestDefaultValues(t *testing.T) {
 	assert.Equal(t, o.AutoIncrement, 1)
 	assert.True(t, o.IsAutoIncrementing)
 	assert.Equal(t, o.Type, "int")
-	assert.Equal(t, o.Length, 11)
+	assert.Equal(t, o.TypeArg, "11")
 }
 
 func TestCustomTypes(t *testing.T) {
@@ -45,7 +45,7 @@ func TestCustomTypes(t *testing.T) {
 	o, err = sql.NewOptions("auto_increment type=bigint(16)")
 	assert.Nil(t, err)
 	assert.Equal(t, o.Type, "bigint")
-	assert.Equal(t, o.Length, 16)
+	assert.Equal(t, o.TypeArg, "16")
 	assert.Equal(t, o.AutoIncrement, 1)
 	assert.True(t, o.IsAutoIncrementing)
 }

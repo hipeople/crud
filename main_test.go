@@ -39,11 +39,20 @@ type Mixed struct {
 	UpdatedAt int64  `json:"-" sql:"default=0 name=updated_at"`
 }
 
+type PostCategory string
+
+const (
+	PostCategoryFood       PostCategory = "food"
+	PostCategoryDrink      PostCategory = "drink"
+	PostCategoryWithHyphen PostCategory = "with-hyphen"
+)
+
 type Post struct {
-	Id        int       `json:"id" sql:"auto-increment primary-key required table-name=renamed_posts"`
-	Title     string    `json:"title"`
-	Text      string    `json:"text"`
-	CreatedAt time.Time `json:"created_at"`
+	Id        int          `json:"id" sql:"auto-increment primary-key required table-name=renamed_posts"`
+	Title     string       `json:"title"`
+	Text      string       `json:"text"`
+	Category  PostCategory `json:"post_category" sql:"name=post_category enum('food','drink','with-hyphen')"`
+	CreatedAt time.Time    `json:"created_at"`
 }
 
 type Foo struct {

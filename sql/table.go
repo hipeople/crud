@@ -37,8 +37,8 @@ func NewFieldQuery(field *Options) string {
 	unsigned := ""
 	unique := ""
 
-	if field.Length > -1 {
-		length = fmt.Sprintf("(%d)", field.Length)
+	if field.TypeArg != "" {
+		length = fmt.Sprintf("(%s)", field.TypeArg)
 	}
 
 	if field.AutoIncrement > 0 {

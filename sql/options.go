@@ -78,7 +78,7 @@ func NewOptions(input string) (*Options, error) {
 type Options struct {
 	Name               string
 	Type               string
-	Length             int
+	TypeArg            string
 	DefaultValue       string
 	AutoIncrement      int
 	IsAutoIncrementing bool
@@ -125,14 +125,15 @@ func (options *Options) ReadType(input string) bool {
 		return false
 	}
 
-	if len(parts) > 1 {
-		if plen, err := strconv.Atoi(parts[1]); err == nil {
-			length = plen
-		}
+	options.Type = name
+
+	if length != 0 {
+		options.TypeArg = fmt.Sprint(length)
 	}
 
-	options.Type = name
-	options.Length = length
+	if len(parts) > 1 {
+		options.TypeArg = parts[1]
+	}
 
 	return true
 }
