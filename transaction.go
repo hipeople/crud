@@ -3,6 +3,7 @@ package crud
 import (
 	"context"
 	stdsql "database/sql"
+	"fmt"
 
 	"github.com/azer/logger"
 )
@@ -86,4 +87,8 @@ func (tx *Tx) Update(record interface{}) error {
 // the database row by finding out the primary key field defined in the table schema.
 func (tx *Tx) Delete(record interface{}) error {
 	return mustDelete(tx.Exec, record)
+}
+
+func (tx *Tx) Begin(ctx context.Context) (*Tx, error) {
+	return nil, fmt.Errorf("can't created nested transactions")
 }
