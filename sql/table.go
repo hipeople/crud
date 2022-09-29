@@ -120,6 +120,17 @@ func InsertQuery(tableName string, columnNames []string) string {
 		tableName, strings.Join(quoteColumnNames(columnNames), ","), questionMarks)
 }
 
+func UpsertQuery(tableName string, columnNames []string) string {
+	var questionMarks string
+
+	if len(columnNames) > 0 {
+		questionMarks = strings.Repeat("?,", len(columnNames))
+		questionMarks = questionMarks[:len(questionMarks)-1]
+	}
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s",
+		tableName, strings.Join(quoteColumnNames(columnNames), ","), questionMarks, strings.Join(quoteColumnNames(columnNames), "=?, ")+"=?")
+}
+
 func SelectQuery(tableName string, columnNames []string) string {
 	columns := strings.Join(columnNames, ",")
 	if columns == "" {

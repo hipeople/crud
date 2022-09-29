@@ -45,7 +45,12 @@ func (ctx *WithContext) Create(record interface{}) error {
 
 // Inserts given record and scans the inserted row back to the given row.
 func (ctx *WithContext) CreateAndRead(record interface{}) error {
-	return createAndRead(ctx.Exec, ctx.Query, record)
+	return createAndRead(ctx.Exec, ctx.Query, record, false)
+}
+
+// Inserts given record and scans the inserted row back to the given row.
+func (ctx *WithContext) UpsertAndRead(record interface{}) error {
+	return createAndRead(ctx.Exec, ctx.Query, record, true)
 }
 
 // Run a select query on the databaase (w/ given parameters optionally) and scan the result(s) to the

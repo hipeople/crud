@@ -111,12 +111,17 @@ func (db *DB) Create(record interface{}) error {
 }
 
 func (db *DB) CreateAndGetResult(record interface{}) (stdsql.Result, error) {
-	return createAndGetResult(db.Exec, record)
+	return createAndGetResult(db.Exec, record, false)
 }
 
 // Inserts given record and scans the inserted row back to the given row.
 func (db *DB) CreateAndRead(record interface{}) error {
-	return createAndRead(db.Exec, db.Query, record)
+	return createAndRead(db.Exec, db.Query, record, false)
+}
+
+// Inserts given record and scans the inserted row back to the given row.
+func (db *DB) UpsertAndRead(record interface{}) error {
+	return createAndRead(db.Exec, db.Query, record, true)
 }
 
 // Runs given SQL query and scans the result rows into the given target interface. The target

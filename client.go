@@ -7,6 +7,7 @@ type Client interface {
 	Query(string, ...interface{}) (*stdsql.Rows, error)
 	Create(interface{}) error
 	CreateAndRead(interface{}) error
+	UpsertAndRead(interface{}) error
 	Read(interface{}, ...interface{}) error
 	Update(interface{}) error
 	Delete(interface{}) error

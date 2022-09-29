@@ -7,30 +7,34 @@ import (
 	"github.com/azer/crud/v2/sql"
 )
 
-func createAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) {
+func createAndGetResult(exec ExecFn, record interface{}, isUpsert bool) (stdsql.Result, error) {
 	row, err := NewRow(record)
 	if err != nil {
 		return nil, err
 	}
 
-	columns := []string{}
-	values := []interface{}{}
+	var columns []string
+	var values []interface{}
 
 	for c, v := range row.SQLValues() {
 		columns = append(columns, c)
 		values = append(values, v)
 	}
 
+	if isUpsert {
+		vals := append(values, values...)
+		return exec(sql.UpsertQuery(row.SQLTableName, columns), vals...)
+	}
 	return exec(sql.InsertQuery(row.SQLTableName, columns), values...)
 }
 
 func create(exec ExecFn, record interface{}) error {
-	_, err := createAndGetResult(exec, record)
+	_, err := createAndGetResult(exec, record, false)
 	return err
 }
 
-func createAndRead(exec ExecFn, query QueryFn, record interface{}) error {
-	result, err := createAndGetResult(exec, record)
+func createAndRead(exec ExecFn, query QueryFn, record interface{}, upsert bool) error {
+	result, err := createAndGetResult(exec, record, upsert)
 	if err != nil {
 		return err
 	}

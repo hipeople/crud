@@ -60,7 +60,12 @@ func (tx *Tx) Create(record interface{}) error {
 
 // Inserts given record and scans the inserted row back to the given row.
 func (tx *Tx) CreateAndRead(record interface{}) error {
-	return createAndRead(tx.Exec, tx.Query, record)
+	return createAndRead(tx.Exec, tx.Query, record, false)
+}
+
+// Inserts given record and scans the inserted row back to the given row.
+func (tx *Tx) UpsertAndRead(record interface{}) error {
+	return createAndRead(tx.Exec, tx.Query, record, true)
 }
 
 // Run a select query on the databaase (w/ given parameters optionally) and scan the result(s) to the
