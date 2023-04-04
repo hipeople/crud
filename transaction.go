@@ -37,6 +37,19 @@ func (tx *Tx) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
 	return result, err
 }
 
+func (tx *Tx) Ping() error {
+	if _, err := tx.Exec("SELECT 1"); err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Commit the transaction.
 func (tx *Tx) Commit() error {
 	log.Info("Committing", logger.Attrs{
@@ -73,7 +86,6 @@ func (tx *Tx) CreateAndRead(record interface{}) error {
 //
 // users := &[]*User{}
 // err := tx.Read(users, "SELECT * FROM users", 1)
-//
 func (tx *Tx) Read(scanTo interface{}, params ...interface{}) error {
 	return read(tx.Query, scanTo, params)
 }
