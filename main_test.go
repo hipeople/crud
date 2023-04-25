@@ -23,6 +23,19 @@ type UserProfile struct {
 	Modified   int64  `json:"modified" sql:"name=modified_col"`
 }
 
+type Insertable struct {
+	Name       string `json:"name" sql:"required"`
+	Bio        string `json:"bio" sql:"type=text"`
+	Email      string `json:"e-mail" sql:"name=email unique"`
+	Attachment []byte `json:"attachment"`
+}
+
+type UserProfileInsertable struct {
+	Id         int `json:"id" sql:"auto-increment primary-key required"`
+	Insertable `sql:"inline"`
+	Modified   int64 `json:"modified" sql:"name=modified_col"`
+}
+
 type UserProfileNull struct {
 	Id       sql.NullInt64  `json:"id" sql:"auto-increment primary-key required"`
 	Name     sql.NullString `json:"name" sql:"required"`
@@ -103,7 +116,7 @@ func TestExecuteSQL(t *testing.T) {
 }
 
 func TestCreateTables(t *testing.T) {
-	err := DB.CreateTables(UserProfile{}, Post{})
+	err := DB.CreateTables(UserProfile{}, Post{}, UserProfileInsertable{})
 	assert.Nil(t, err)
 	assert.True(t, DB.CheckIfTableExists("user_profiles"))
 	assert.True(t, DB.CheckIfTableExists("renamed_posts"))

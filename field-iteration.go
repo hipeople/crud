@@ -63,7 +63,7 @@ func (iteration *FieldIteration) SQLOptions() (*sql.Options, error) {
 		result.Name = snakecase.SnakeCase(iteration.Name())
 	}
 
-	if len(result.Type) == 0 {
+	if len(result.Type) == 0 && !result.IsInline {
 		sqlType, err := sql.MatchType(iteration.TypeField().Type.String())
 		if err != nil {
 			return nil, err

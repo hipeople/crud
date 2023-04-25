@@ -63,6 +63,14 @@ func CollectRows(st interface{}, rows []*RowValue) ([]*RowValue, error) {
 			continue
 		}
 
+		if sqlOptions.IsInline {
+			rows, err = CollectRows(iter.Value(), rows)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+
 		value := iter.Value()
 
 		if n, ok := value.(int); ok && sqlOptions.AutoIncrement > 0 && n == 0 {

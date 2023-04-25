@@ -49,6 +49,10 @@ func NewOptions(input string) (*Options, error) {
 			continue
 		}
 
+		if options.ReadInline(part) {
+			continue
+		}
+
 		if part == "primary-key" || part == "primary_key" || part == "primarykey" {
 			options.IsPrimaryKey = true
 			continue
@@ -84,6 +88,7 @@ type Options struct {
 	IsAutoIncrementing bool
 	IsPrimaryKey       bool
 	IsUnique           bool
+	IsInline           bool
 	IsUnsigned         bool
 	IsRequired         bool
 	Ignore             bool
@@ -165,6 +170,17 @@ func (options *Options) ReadTableName(input string) bool {
 	}
 
 	options.TableName = value
+	return true
+}
+
+func (options *Options) ReadInline(input string) bool {
+	_, ok := options.ReadAttr(input, "inline")
+	if !ok {
+		return false
+	}
+
+	options.IsInline = true
+
 	return true
 }
 

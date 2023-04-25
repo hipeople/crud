@@ -32,6 +32,14 @@ func CollectFields(st interface{}, fields []*Field) ([]*Field, error) {
 			continue
 		}
 
+		if sqlOptions.IsInline {
+			fields, err = CollectFields(iter.Value(), fields)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+
 		fields = append(fields, &Field{
 			Name:  iter.Name(),
 			Value: iter.Value(),

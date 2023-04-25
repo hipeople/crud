@@ -2,6 +2,7 @@ package crud_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/azer/crud/v2"
 	"github.com/stretchr/testify/assert"
@@ -184,6 +185,10 @@ func CreateUserProfiles() error {
 		return err
 	}
 
+	if err := DB.ResetTables(UserProfileInsertable{}); err != nil {
+		return err
+	}
+
 	if err := DB.Create(UserProfile{
 		Name:       "Nova",
 		Bio:        "Photographer",
@@ -206,6 +211,17 @@ func CreateUserProfiles() error {
 		Name:       "Hola",
 		Email:      "hola@roadbeats.com",
 		Attachment: []byte("{ \"hola\": \"bar\" }"),
+	}); err != nil {
+		return err
+	}
+
+	if err := DB.Create(UserProfileInsertable{
+		Insertable: Insertable{
+			Name:       "Hola",
+			Email:      "hola@roadbeats.com",
+			Attachment: []byte("{ \"hola\": \"bar\" }"),
+		},
+		Modified: time.Now().UnixNano(),
 	}); err != nil {
 		return err
 	}
