@@ -3,8 +3,9 @@ package crud
 import (
 	"context"
 	stdsql "database/sql"
+	"time"
 
-	"github.com/azer/logger"
+	"log/slog"
 )
 
 type WithContext struct {
@@ -16,24 +17,18 @@ type WithContext struct {
 
 // Execute any SQL query on the context client. Returns sql.Result.
 func (ctx *WithContext) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
-	timer := log.Timer()
+	start := time.Now()
 	result, err := ctx.DB.ExecContext(ctx.Context, sql, params...)
-	timer.End("Executed SQL query.", logger.Attrs{
-		ctx.IdKey: ctx.Id,
-		"sql":     sql,
-	})
+	slog.InfoContext(ctx.Context, "Executed SQL query", "sql", sql, "took", time.Since(start))
 
 	return result, err
 }
 
 // Execute any SQL query on the context client. Returns sql.Rows.
 func (ctx *WithContext) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
-	timer := log.Timer()
+	start := time.Now()
 	result, err := ctx.DB.QueryContext(ctx.Context, sql, params...)
-	timer.End("Run SQL query.", logger.Attrs{
-		ctx.IdKey: ctx.Id,
-		"sql":     sql,
-	})
+	slog.InfoContext(ctx.Context, "Ran SQL query", "sql", sql, "took", time.Since(start))
 
 	return result, err
 }
