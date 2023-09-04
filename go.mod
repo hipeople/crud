@@ -1,7 +1,6 @@
 module github.com/azer/crud/v2
 
 require (
-	github.com/azer/logger v1.0.0
 	github.com/azer/snakecase v1.0.0
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/jinzhu/inflection v1.0.0

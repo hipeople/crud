@@ -3,13 +3,12 @@ package crud
 import (
 	"context"
 	stdsql "database/sql"
+	"log/slog"
+	"time"
 
 	"github.com/azer/crud/v2/sql"
-	"github.com/azer/logger"
 	"github.com/labstack/gommon/random"
 )
-
-var log = logger.New("crud")
 
 type ExecFn func(string, ...interface{}) (stdsql.Result, error)
 type QueryFn func(string, ...interface{}) (*stdsql.Rows, error)
@@ -26,18 +25,18 @@ func (db *DB) Ping() error {
 
 // Run any query on the database client, passing parameters optionally. Returns sql.Result.
 func (db *DB) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
-	timer := log.Timer()
+	start := time.Now()
 	result, error := db.Client.Exec(sql, params...)
-	timer.End("SQL Query Executed: %s", sql)
+	slog.Info("Executed SQL query", "sql", sql, "took", time.Since(start))
 	return result, error
 }
 
 // Run any query on the database client, passing parameters optionally. Its difference with
 // `Exec` method is returning `sql.Rows` instead of `sql.Result`.
 func (db *DB) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
-	timer := log.Timer()
+	start := time.Now()
 	result, error := db.Client.Query(sql, params...)
-	timer.End("SQL Query Executed: %s", sql)
+	slog.Info("Ran SQL query", "sql", sql, "took", time.Since(start))
 	return result, error
 }
 
@@ -129,7 +128,6 @@ func (db *DB) CreateAndRead(record interface{}) error {
 //
 // users := &[]*User{}
 // err := tx.Read(users, "SELECT * FROM users", 1)
-//
 func (db *DB) Read(scanTo interface{}, params ...interface{}) error {
 	return read(db.Query, scanTo, params)
 }
@@ -154,8 +152,6 @@ func (db *DB) Begin(ctx context.Context) (*Tx, error) {
 	}
 
 	return &Tx{
-		Id:      random.String(32),
-		IdKey:   "Id",
 		Client:  client,
 		Context: ctx,
 	}, nil

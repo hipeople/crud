@@ -4,52 +4,40 @@ import (
 	"context"
 	stdsql "database/sql"
 	"fmt"
-
-	"github.com/azer/logger"
+	"log/slog"
+	"time"
 )
 
 type Tx struct {
 	Context context.Context
 	Client  *stdsql.Tx
-	Id      string
-	IdKey   string
 }
 
 // Execute any SQL query on the transaction client. Returns sql.Result.
 func (tx *Tx) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
-	timer := log.Timer()
+	start := time.Now()
 	result, err := tx.Client.ExecContext(tx.Context, sql, params...)
-	timer.End("Executed SQL query.", logger.Attrs{
-		tx.IdKey: tx.Id,
-		"sql":    sql,
-	})
+	slog.InfoContext(tx.Context, "Executed SQL query", "sql", sql, "took", time.Since(start))
 	return result, err
 }
 
 // Execute any SQL query on the transaction client. Returns sql.Rows.
 func (tx *Tx) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
-	timer := log.Timer()
+	start := time.Now()
 	result, err := tx.Client.QueryContext(tx.Context, sql, params...)
-	timer.End("Run SQL query.", logger.Attrs{
-		tx.IdKey: tx.Id,
-		"sql":    sql,
-	})
+	slog.InfoContext(tx.Context, "Ran SQL query", "sql", sql, "took", time.Since(start))
 	return result, err
 }
 
 // Commit the transaction.
 func (tx *Tx) Commit() error {
-	log.Info("Committing", logger.Attrs{
-		tx.IdKey: tx.Id,
-	})
+	slog.InfoContext(tx.Context, "Committing")
 	return tx.Client.Commit()
 }
 
 // Rollback the transaction.
 func (tx *Tx) Rollback() error {
-	log.Info("Rolling back", logger.Attrs{
-		tx.IdKey: tx.Id,
-	})
+	slog.InfoContext(tx.Context, "Rolling back")
 	return tx.Client.Rollback()
 }
 
@@ -73,7 +61,6 @@ func (tx *Tx) CreateAndRead(record interface{}) error {
 //
 // users := &[]*User{}
 // err := tx.Read(users, "SELECT * FROM users", 1)
-//
 func (tx *Tx) Read(scanTo interface{}, params ...interface{}) error {
 	return read(tx.Query, scanTo, params)
 }
