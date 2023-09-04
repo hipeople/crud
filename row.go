@@ -54,12 +54,11 @@ func CollectRows(st interface{}, rows []*RowValue) ([]*RowValue, error) {
 	iter := NewFieldIteration(st)
 	for iter.Next() {
 		sqlOptions, err := iter.SQLOptions()
-
 		if err != nil {
 			return nil, err
 		}
 
-		if sqlOptions.Ignore {
+		if sqlOptions.Ignore || sqlOptions.Generated {
 			continue
 		}
 
