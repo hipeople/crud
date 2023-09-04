@@ -68,7 +68,7 @@ func (table *Table) SQLUpdateColumnSet() []string {
 	columns := []string{}
 
 	for _, f := range table.Fields {
-		if f.SQL.Ignore || f.SQL.IsAutoIncrementing {
+		if f.SQL.Ignore || f.SQL.IsAutoIncrementing || f.SQL.Generated {
 			continue
 		}
 
@@ -82,7 +82,7 @@ func (table *Table) SQLUpdateValueSet() []interface{} {
 	values := []interface{}{}
 
 	for _, f := range table.Fields {
-		if f.SQL.Ignore || f.SQL.IsAutoIncrementing {
+		if f.SQL.Ignore || f.SQL.IsAutoIncrementing || f.SQL.Generated {
 			continue
 		}
 

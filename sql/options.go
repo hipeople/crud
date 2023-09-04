@@ -69,6 +69,11 @@ func NewOptions(input string) (*Options, error) {
 			continue
 		}
 
+		if part == "generated" {
+			options.Generated = true
+			continue
+		}
+
 		return nil, errors.New(fmt.Sprintf("Unrecognized SQL option: %s", part))
 	}
 
@@ -87,6 +92,7 @@ type Options struct {
 	IsUnsigned         bool
 	IsRequired         bool
 	Ignore             bool
+	Generated          bool
 	TableName          string
 }
 
