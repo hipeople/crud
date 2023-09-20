@@ -109,14 +109,16 @@ func ShowTablesLikeQuery(name string) string {
 }
 
 func InsertQuery(tableName string, columnNames []string) string {
-	var questionMarks string
-
-	if len(columnNames) > 0 {
-		questionMarks = strings.Repeat("?,", len(columnNames))
-		questionMarks = questionMarks[:len(questionMarks)-1]
-	}
+	questionMarks := repeatComma(len(columnNames), "?")
 
 	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+		tableName, strings.Join(quoteColumnNames(columnNames), ","), questionMarks)
+}
+
+func ReplaceQuery(tableName string, columnNames []string) string {
+	questionMarks := repeatComma(len(columnNames), "?")
+
+	return fmt.Sprintf("REPLACE INTO %s (%s) VALUES (%s)",
 		tableName, strings.Join(quoteColumnNames(columnNames), ","), questionMarks)
 }
 
@@ -149,4 +151,15 @@ func quoteColumnNames(columns []string) []string {
 	}
 
 	return quoted
+}
+
+func repeatComma(num int, char string) string {
+	var out string
+
+	if num > 0 {
+		out = strings.Repeat(char+",", num)
+		out = out[:len(out)-1]
+	}
+
+	return out
 }

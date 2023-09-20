@@ -8,17 +8,9 @@ import (
 )
 
 func createAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) {
-	row, err := NewRow(record)
+	row, columns, values, err := valuesForRecord(record)
 	if err != nil {
 		return nil, err
-	}
-
-	columns := []string{}
-	values := []interface{}{}
-
-	for c, v := range row.SQLValues() {
-		columns = append(columns, c)
-		values = append(values, v)
 	}
 
 	return exec(sql.InsertQuery(row.SQLTableName, columns), values...)
@@ -35,6 +27,50 @@ func createAndRead(exec ExecFn, query QueryFn, record interface{}) error {
 		return err
 	}
 
+	return readLastInsert(query, record, result)
+}
+
+func replaceAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) {
+	row, columns, values, err := valuesForRecord(record)
+	if err != nil {
+		return nil, err
+	}
+
+	return exec(sql.ReplaceQuery(row.SQLTableName, columns), values...)
+}
+
+func replace(exec ExecFn, record interface{}) error {
+	_, err := replaceAndGetResult(exec, record)
+	return err
+}
+
+func replaceAndRead(exec ExecFn, query QueryFn, record interface{}) error {
+	result, err := replaceAndGetResult(exec, record)
+	if err != nil {
+		return err
+	}
+
+	return readLastInsert(query, record, result)
+}
+
+func valuesForRecord(record interface{}) (*Row, []string, []interface{}, error) {
+	row, err := NewRow(record)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	columns := []string{}
+	values := []interface{}{}
+
+	for c, v := range row.SQLValues() {
+		columns = append(columns, c)
+		values = append(values, v)
+	}
+
+	return row, columns, values, nil
+}
+
+func readLastInsert(query QueryFn, record interface{}, result stdsql.Result) error {
 	id, err := result.LastInsertId()
 	if err != nil {
 		return err

@@ -51,6 +51,16 @@ func (tx *Tx) CreateAndRead(record interface{}) error {
 	return createAndRead(tx.Exec, tx.Query, record)
 }
 
+// Replace given record to the database.
+func (tx *Tx) Replace(record interface{}) error {
+	return replace(tx.Exec, record)
+}
+
+// Replaces given record and scans the replaceed row back to the given row.
+func (tx *Tx) ReplaceAndRead(record interface{}) error {
+	return replaceAndRead(tx.Exec, tx.Query, record)
+}
+
 // Run a select query on the databaase (w/ given parameters optionally) and scan the result(s) to the
 // target interface specified as the first parameter.
 //
