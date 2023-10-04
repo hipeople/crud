@@ -118,6 +118,20 @@ func (db *DB) CreateAndRead(record interface{}) error {
 	return createAndRead(db.Exec, db.Query, record)
 }
 
+// Replaces given record into the database, generating a replace query for it.
+func (db *DB) Replace(record interface{}) error {
+	return replace(db.Exec, record)
+}
+
+func (db *DB) ReplaceAndGetResult(record interface{}) (stdsql.Result, error) {
+	return replaceAndGetResult(db.Exec, record)
+}
+
+// Replaces given record and scans the replaceed row back to the given row.
+func (db *DB) ReplaceAndRead(record interface{}) error {
+	return replaceAndRead(db.Exec, db.Query, record)
+}
+
 // Runs given SQL query and scans the result rows into the given target interface. The target
 // interface could be both a single record or a slice of records.
 //
