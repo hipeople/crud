@@ -19,7 +19,7 @@ type WithContext struct {
 func (ctx *WithContext) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
 	result, err := ctx.DB.ExecContext(ctx.Context, sql, params...)
-	slog.InfoContext(ctx.Context, "Executed SQL query", "sql", sql, "took", time.Since(start))
+	slog.DebugContext(ctx.Context, "Executed SQL query", "sql", sql, "took", time.Since(start))
 
 	return result, err
 }
@@ -28,7 +28,7 @@ func (ctx *WithContext) Exec(sql string, params ...interface{}) (stdsql.Result, 
 func (ctx *WithContext) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
 	start := time.Now()
 	result, err := ctx.DB.QueryContext(ctx.Context, sql, params...)
-	slog.InfoContext(ctx.Context, "Ran SQL query", "sql", sql, "took", time.Since(start))
+	slog.DebugContext(ctx.Context, "Ran SQL query", "sql", sql, "took", time.Since(start))
 
 	return result, err
 }
