@@ -17,7 +17,7 @@ type Tx struct {
 func (tx *Tx) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
 	result, err := tx.Client.ExecContext(tx.Context, sql, params...)
-	slog.InfoContext(tx.Context, "Executed SQL query", "sql", sql, "took", time.Since(start))
+	slog.DebugContext(tx.Context, "Executed SQL query", "sql", sql, "took", time.Since(start))
 	return result, err
 }
 
@@ -25,19 +25,19 @@ func (tx *Tx) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
 func (tx *Tx) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
 	start := time.Now()
 	result, err := tx.Client.QueryContext(tx.Context, sql, params...)
-	slog.InfoContext(tx.Context, "Ran SQL query", "sql", sql, "took", time.Since(start))
+	slog.DebugContext(tx.Context, "Ran SQL query", "sql", sql, "took", time.Since(start))
 	return result, err
 }
 
 // Commit the transaction.
 func (tx *Tx) Commit() error {
-	slog.InfoContext(tx.Context, "Committing")
+	slog.DebugContext(tx.Context, "Committing")
 	return tx.Client.Commit()
 }
 
 // Rollback the transaction.
 func (tx *Tx) Rollback() error {
-	slog.InfoContext(tx.Context, "Rolling back")
+	slog.DebugContext(tx.Context, "Rolling back")
 	return tx.Client.Rollback()
 }
 

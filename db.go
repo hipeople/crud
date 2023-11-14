@@ -27,7 +27,7 @@ func (db *DB) Ping() error {
 func (db *DB) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
 	result, error := db.Client.Exec(sql, params...)
-	slog.Info("Executed SQL query", "sql", sql, "took", time.Since(start))
+	slog.Debug("Executed SQL query", "sql", sql, "took", time.Since(start))
 	return result, error
 }
 
@@ -36,7 +36,7 @@ func (db *DB) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
 func (db *DB) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
 	start := time.Now()
 	result, error := db.Client.Query(sql, params...)
-	slog.Info("Ran SQL query", "sql", sql, "took", time.Since(start))
+	slog.Debug("Ran SQL query", "sql", sql, "took", time.Since(start))
 	return result, error
 }
 
