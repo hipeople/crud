@@ -1,13 +1,30 @@
 package crud
 
 import (
+	"reflect"
+	"sync"
+
 	"github.com/azer/crud/v2/meta"
 	"github.com/azer/crud/v2/sql"
+)
+
+var (
+	tableCache   = map[reflect.Type]*Table{}
+	tableCacheMu sync.RWMutex
 )
 
 // Create an internal representation of a database table, including its fields from given
 // struct record
 func NewTable(any interface{}) (*Table, error) {
+	anyT := reflect.TypeOf(any)
+
+	tableCacheMu.RLock()
+	if t, ok := tableCache[anyT]; ok {
+		tableCacheMu.RUnlock()
+		return t, nil
+	}
+	tableCacheMu.RUnlock()
+
 	if meta.IsSlice(any) {
 		any = meta.CreateElement(any).Interface()
 	}
@@ -21,11 +38,17 @@ func NewTable(any interface{}) (*Table, error) {
 
 	name, sqlName := ReadTableName(any)
 
-	return &Table{
+	t := &Table{
 		Name:    name,
 		SQLName: sqlName,
 		Fields:  fields,
-	}, nil
+	}
+
+	tableCacheMu.Lock()
+	tableCache[anyT] = t
+	tableCacheMu.Unlock()
+
+	return t, nil
 }
 
 type Table struct {
