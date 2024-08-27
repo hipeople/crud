@@ -35,7 +35,7 @@ func TestSuccessfulCommit(t *testing.T) {
 	azerc := UserProfile{}
 	err = DB.Read(&azerc, "SELECT * from user_profiles WHERE id = ?", 2)
 	assert.Nil(t, err)
-	assert.Equal(t, azerc.Bio, "let's go somewhere")
+	assert.Equal(t, "let's go somewhere", azerc.Bio)
 
 	DB.DropTables(UserProfile{})
 }

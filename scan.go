@@ -22,7 +22,6 @@ func NewScan(to interface{}) (*Scan, error) {
 			return nil, err
 		}
 
-		scan.Table = table
 		scan.SQLColumnDict = table.SQLColumnDict()
 	}
 
@@ -34,7 +33,6 @@ type Scan struct {
 	ToPointers    bool
 	ToStructs     bool
 	SQLColumnDict map[string]string
-	Table         *Table
 }
 
 func (scan *Scan) All(rows *sql.Rows) error {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/azer/crud/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResolveReadParams(t *testing.T) {
@@ -211,4 +212,17 @@ func CreateUserProfiles() error {
 	}
 
 	return nil
+}
+
+func BenchmarkRead(b *testing.B) {
+	require.NoError(b, CreateUserProfiles())
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		var user UserProfile
+		err := DB.Read(&user, "SELECT * FROM user_profiles LIMIT 1")
+		require.NoError(b, err)
+		assert.NotZero(b, user.Id)
+		assert.NotZero(b, user.Name)
+	}
 }

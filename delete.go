@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/azer/crud/v2/meta"
 	"github.com/azer/crud/v2/sql"
 )
 
@@ -20,7 +21,7 @@ func deleteRow(exec ExecFn, record interface{}) (stdsql.Result, error) {
 		return nil, errors.New(fmt.Sprintf("Table '%s' (%s) doesn't have a primary-key field", table.Name, table.SQLName))
 	}
 
-	return exec(sql.DeleteQuery(table.SQLName, pk.SQL.Name), pk.Value)
+	return exec(sql.DeleteQuery(table.SQLName, pk.SQL.Name), meta.StructFieldValue(record, pk.Name))
 }
 
 func mustDelete(exec ExecFn, record interface{}) error {

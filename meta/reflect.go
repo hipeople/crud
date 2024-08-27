@@ -47,6 +47,14 @@ func HasPointers(any interface{}) bool {
 	return ElementType(any).Kind() == reflect.Ptr
 }
 
+func StructFieldValue(any interface{}, name string) any {
+	rv := reflect.ValueOf(any)
+	if rv.Kind() == reflect.Pointer {
+		rv = rv.Elem()
+	}
+	return rv.FieldByName(name).Interface()
+}
+
 func IsEmpty(any interface{}) bool {
 	v := ValueOf(any)
 

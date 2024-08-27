@@ -78,7 +78,7 @@ func (table *Table) SQLUpdateColumnSet() []string {
 	return columns
 }
 
-func (table *Table) SQLUpdateValueSet() []interface{} {
+func (table *Table) SQLUpdateValueSet(record interface{}) []interface{} {
 	values := []interface{}{}
 
 	for _, f := range table.Fields {
@@ -86,13 +86,12 @@ func (table *Table) SQLUpdateValueSet() []interface{} {
 			continue
 		}
 
-		values = append(values, f.Value)
+		values = append(values, meta.StructFieldValue(record, f.Name))
 	}
 
 	pk := table.PrimaryKeyField()
-
 	if pk != nil {
-		values = append(values, pk.Value)
+		values = append(values, meta.StructFieldValue(record, pk.Name))
 	}
 
 	return values
