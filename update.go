@@ -19,7 +19,7 @@ func update(exec ExecFn, record interface{}) (stdsql.Result, error) {
 		return nil, errors.New(fmt.Sprintf("Table '%s' (%s) doesn't have a primary-key field", table.Name, table.SQLName))
 	}
 
-	return exec(sql.UpdateQuery(table.SQLName, pk.SQL.Name, table.SQLUpdateColumnSet()), table.SQLUpdateValueSet()...)
+	return exec(sql.UpdateQuery(table.SQLName, pk.SQL.Name, table.SQLUpdateColumnSet()), table.SQLUpdateValueSet(record)...)
 }
 
 func mustUpdate(exec ExecFn, record interface{}) error {

@@ -1,13 +1,30 @@
 package crud
 
 import (
+	"reflect"
+	"sync"
+
 	"github.com/azer/crud/v2/meta"
 	"github.com/azer/crud/v2/sql"
+)
+
+var (
+	tableCache   = map[reflect.Type]*Table{}
+	tableCacheMu sync.RWMutex
 )
 
 // Create an internal representation of a database table, including its fields from given
 // struct record
 func NewTable(any interface{}) (*Table, error) {
+	anyT := reflect.TypeOf(any)
+
+	tableCacheMu.RLock()
+	if t, ok := tableCache[anyT]; ok {
+		tableCacheMu.RUnlock()
+		return t, nil
+	}
+	tableCacheMu.RUnlock()
+
 	if meta.IsSlice(any) {
 		any = meta.CreateElement(any).Interface()
 	}
@@ -21,11 +38,17 @@ func NewTable(any interface{}) (*Table, error) {
 
 	name, sqlName := ReadTableName(any)
 
-	return &Table{
+	t := &Table{
 		Name:    name,
 		SQLName: sqlName,
 		Fields:  fields,
-	}, nil
+	}
+
+	tableCacheMu.Lock()
+	tableCache[anyT] = t
+	tableCacheMu.Unlock()
+
+	return t, nil
 }
 
 type Table struct {
@@ -78,7 +101,7 @@ func (table *Table) SQLUpdateColumnSet() []string {
 	return columns
 }
 
-func (table *Table) SQLUpdateValueSet() []interface{} {
+func (table *Table) SQLUpdateValueSet(record interface{}) []interface{} {
 	values := []interface{}{}
 
 	for _, f := range table.Fields {
@@ -86,13 +109,12 @@ func (table *Table) SQLUpdateValueSet() []interface{} {
 			continue
 		}
 
-		values = append(values, f.Value)
+		values = append(values, meta.StructFieldValue(record, f.Name))
 	}
 
 	pk := table.PrimaryKeyField()
-
 	if pk != nil {
-		values = append(values, pk.Value)
+		values = append(values, meta.StructFieldValue(record, pk.Name))
 	}
 
 	return values

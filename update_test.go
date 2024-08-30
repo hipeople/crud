@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMustUpdate(t *testing.T) {
@@ -14,7 +15,7 @@ func TestMustUpdate(t *testing.T) {
 	assert.Nil(t, err)
 
 	nova.Bio = "Hola"
-	assert.Nil(t, DB.Update(nova))
+	require.NoError(t, DB.Update(nova))
 
 	novac := UserProfile{}
 	err = DB.Read(&novac, "SELECT * FROM user_profiles WHERE name = 'Nova'")

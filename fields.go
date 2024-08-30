@@ -5,9 +5,8 @@ import (
 )
 
 type Field struct {
-	Name  string
-	Value interface{}
-	SQL   *sql.Options
+	Name string
+	SQL  *sql.Options
 }
 
 // Get DB fields of any valid struct given
@@ -33,9 +32,8 @@ func CollectFields(st interface{}, fields []*Field) ([]*Field, error) {
 		}
 
 		fields = append(fields, &Field{
-			Name:  iter.Name(),
-			Value: iter.Value(),
-			SQL:   sqlOptions,
+			Name: iter.Name(),
+			SQL:  sqlOptions,
 		})
 	}
 

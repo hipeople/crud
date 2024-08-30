@@ -1,6 +1,7 @@
 package crud_test
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -10,9 +11,41 @@ import (
 	"github.com/azer/crud/v2"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
+	"github.com/testcontainers/testcontainers-go/modules/mariadb"
 )
 
 var DB *crud.DB
+
+func TestMain(m *testing.M) {
+	var exit int
+	defer func() { os.Exit(exit) }() // allow unroll defer stack with Exit
+
+	errf := func(format string, a ...any) {
+		exit = 1
+		fmt.Fprintf(os.Stderr, format, a...)
+	}
+
+	cont, err := mariadb.Run(context.Background(), "mariadb")
+	if err != nil {
+		errf("run container: %v", err)
+		return
+	}
+	defer cont.Terminate(context.Background())
+
+	connStr, err := cont.ConnectionString(context.Background())
+	if err != nil {
+		errf("get connection string: %v", err)
+		return
+	}
+
+	DB, err = crud.Connect("mysql", connStr)
+	if err != nil {
+		errf("connect: %v", err)
+		return
+	}
+
+	exit = m.Run()
+}
 
 type UserProfile struct {
 	Id         int    `json:"id" sql:"auto-increment primary-key required"`
@@ -73,16 +106,6 @@ type FooPTRSlice []*Foo
 
 type CustomTableName struct {
 	Foo int `sql:"table-name=yolo"`
-}
-
-func init() {
-	fmt.Println("db:", os.Getenv("DATABASE_URL"))
-
-	var err error
-	DB, err = crud.Connect("mysql", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		panic(err)
-	}
 }
 
 func TestPing(t *testing.T) {
