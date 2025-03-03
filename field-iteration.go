@@ -1,8 +1,8 @@
 package crud
 
 import (
-	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/azer/crud/v2/meta"
 	"github.com/azer/crud/v2/sql"
@@ -71,7 +71,7 @@ func (iteration *FieldIteration) SQLOptions() (*sql.Options, error) {
 
 		result.Type = sqlType
 		if length := sql.Types[result.Type]; length != 0 {
-			result.TypeArg = fmt.Sprint(length)
+			result.TypeArg = strconv.Itoa(length)
 		}
 	}
 
