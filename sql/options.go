@@ -134,7 +134,7 @@ func (options *Options) ReadType(input string) bool {
 	options.Type = name
 
 	if length != 0 {
-		options.TypeArg = fmt.Sprint(length)
+		options.TypeArg = strconv.Itoa(length)
 	}
 
 	if len(parts) > 1 {
