@@ -126,15 +126,19 @@ func TestExecuteSQL(t *testing.T) {
 }
 
 func TestCreateTables(t *testing.T) {
-	err := DB.CreateTables(UserProfile{}, Post{})
+	ctx := context.Background()
+
+	err := DB.CreateTables(ctx, UserProfile{}, Post{})
 	assert.Nil(t, err)
-	assert.True(t, DB.CheckIfTableExists("user_profiles"))
-	assert.True(t, DB.CheckIfTableExists("renamed_posts"))
+	assert.True(t, DB.CheckIfTableExists(ctx, "user_profiles"))
+	assert.True(t, DB.CheckIfTableExists(ctx, "renamed_posts"))
 }
 
 func TestDropTables(t *testing.T) {
-	err := DB.DropTables(UserProfile{}, Post{})
+	ctx := context.Background()
+
+	err := DB.DropTables(ctx, UserProfile{}, Post{})
 	assert.Nil(t, err)
-	assert.False(t, DB.CheckIfTableExists("user_profiles"))
-	assert.False(t, DB.CheckIfTableExists("posts"))
+	assert.False(t, DB.CheckIfTableExists(ctx, "user_profiles"))
+	assert.False(t, DB.CheckIfTableExists(ctx, "posts"))
 }

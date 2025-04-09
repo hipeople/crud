@@ -1,13 +1,14 @@
 package crud
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/azer/crud/v2/meta"
 )
 
-func read(query QueryFn, scanTo interface{}, allparams []interface{}) error {
+func read(ctx context.Context, query QueryFn, scanTo interface{}, allparams []interface{}) error {
 	sql, params, err := ResolveReadParams(allparams)
 	if err != nil {
 		return err
@@ -18,19 +19,19 @@ func read(query QueryFn, scanTo interface{}, allparams []interface{}) error {
 	}
 
 	if meta.IsSlice(scanTo) {
-		return readAll(query, scanTo, sql, params)
+		return readAll(ctx, query, scanTo, sql, params)
 	}
 
-	return readOne(query, scanTo, sql, params)
+	return readOne(ctx, query, scanTo, sql, params)
 }
 
-func readOne(query QueryFn, scanTo interface{}, sql string, params []interface{}) error {
+func readOne(ctx context.Context, query QueryFn, scanTo interface{}, sql string, params []interface{}) error {
 	scanner, err := NewScan(scanTo)
 	if err != nil {
 		return err
 	}
 
-	rows, err := query(sql, params...)
+	rows, err := query(ctx, sql, params...)
 	if err != nil {
 		return err
 	}
@@ -44,13 +45,13 @@ func readOne(query QueryFn, scanTo interface{}, sql string, params []interface{}
 	return rows.Err()
 }
 
-func readAll(query QueryFn, scanTo interface{}, sql string, params []interface{}) error {
+func readAll(ctx context.Context, query QueryFn, scanTo interface{}, sql string, params []interface{}) error {
 	scanner, err := NewScan(scanTo)
 	if err != nil {
 		return err
 	}
 
-	rows, err := query(sql, params...)
+	rows, err := query(ctx, sql, params...)
 	if err != nil {
 		return err
 	}

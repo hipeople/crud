@@ -1,6 +1,7 @@
 package crud_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,17 +9,19 @@ import (
 )
 
 func TestMustUpdate(t *testing.T) {
-	assert.Nil(t, CreateUserProfiles())
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
 
 	nova := UserProfile{}
-	err := DB.Read(&nova, "SELECT * FROM user_profiles WHERE name = 'Nova'")
+	err := DB.Read(ctx, &nova, "SELECT * FROM user_profiles WHERE name = 'Nova'")
 	assert.Nil(t, err)
 
 	nova.Bio = "Hola"
-	require.NoError(t, DB.Update(nova))
+	require.NoError(t, DB.Update(ctx, nova))
 
 	novac := UserProfile{}
-	err = DB.Read(&novac, "SELECT * FROM user_profiles WHERE name = 'Nova'")
+	err = DB.Read(ctx, &novac, "SELECT * FROM user_profiles WHERE name = 'Nova'")
 	assert.Nil(t, err)
 	assert.Equal(t, novac.Bio, "Hola")
 	assert.Equal(t, novac.Email, nova.Email)
@@ -26,7 +29,9 @@ func TestMustUpdate(t *testing.T) {
 }
 
 func TestMustUpdateNotMatching(t *testing.T) {
-	assert.NotNil(t, DB.Update(&UserProfile{
+	ctx := context.Background()
+
+	assert.NotNil(t, DB.Update(ctx, &UserProfile{
 		Id:   123,
 		Name: "Yolo",
 	}))

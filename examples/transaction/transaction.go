@@ -26,7 +26,9 @@ func main() {
 		panic(err)
 	}
 
-	if err := DB.CreateTables(User{}); err != nil {
+	ctx := context.Background()
+
+	if err := DB.CreateTables(ctx, User{}); err != nil {
 		panic(err)
 	}
 
@@ -48,15 +50,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		LastName:  "Bar",
 	}
 
-	if err := tx.CreateAndRead(&row); err != nil {
+	if err := tx.CreateAndRead(ctx, &row); err != nil {
 		panic(err)
 	}
 
-	if _, err := tx.Query("SELECT sleep(15)"); err != nil {
+	if _, err := tx.Query(ctx, "SELECT sleep(15)"); err != nil {
 		panic(err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		panic(err)
 	}
 

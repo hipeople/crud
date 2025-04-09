@@ -9,56 +9,55 @@ import (
 )
 
 type Tx struct {
-	Context context.Context
-	Client  *stdsql.Tx
+	Client *stdsql.Tx
 }
 
 // Execute any SQL query on the transaction client. Returns sql.Result.
-func (tx *Tx) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
+func (tx *Tx) Exec(ctx context.Context, sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
-	result, err := tx.Client.ExecContext(tx.Context, sql, params...)
-	slog.DebugContext(tx.Context, "Executed SQL query", "sql", sql, "values", params, "took", time.Since(start))
+	result, err := tx.Client.ExecContext(ctx, sql, params...)
+	slog.DebugContext(ctx, "Executed SQL query", "sql", sql, "values", params, "took", time.Since(start))
 	return result, err
 }
 
 // Execute any SQL query on the transaction client. Returns sql.Rows.
-func (tx *Tx) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
+func (tx *Tx) Query(ctx context.Context, sql string, params ...interface{}) (*stdsql.Rows, error) {
 	start := time.Now()
-	result, err := tx.Client.QueryContext(tx.Context, sql, params...)
-	slog.DebugContext(tx.Context, "Ran SQL query", "sql", sql, "took", time.Since(start))
+	result, err := tx.Client.QueryContext(ctx, sql, params...)
+	slog.DebugContext(ctx, "Ran SQL query", "sql", sql, "took", time.Since(start))
 	return result, err
 }
 
 // Commit the transaction.
-func (tx *Tx) Commit() error {
-	slog.DebugContext(tx.Context, "Committing")
+func (tx *Tx) Commit(ctx context.Context) error {
+	slog.DebugContext(ctx, "Committing")
 	return tx.Client.Commit()
 }
 
 // Rollback the transaction.
-func (tx *Tx) Rollback() error {
-	slog.DebugContext(tx.Context, "Rolling back")
+func (tx *Tx) Rollback(ctx context.Context) error {
+	slog.DebugContext(ctx, "Rolling back")
 	return tx.Client.Rollback()
 }
 
 // Insert given record to the database.
-func (tx *Tx) Create(record interface{}) error {
-	return create(tx.Exec, record)
+func (tx *Tx) Create(ctx context.Context, record interface{}) error {
+	return create(ctx, tx.Exec, record)
 }
 
 // Inserts given record and scans the inserted row back to the given row.
-func (tx *Tx) CreateAndRead(record interface{}) error {
-	return createAndRead(tx.Exec, tx.Query, record)
+func (tx *Tx) CreateAndRead(ctx context.Context, record interface{}) error {
+	return createAndRead(ctx, tx.Exec, tx.Query, record)
 }
 
 // Replace given record to the database.
-func (tx *Tx) Replace(record interface{}) error {
-	return replace(tx.Exec, record)
+func (tx *Tx) Replace(ctx context.Context, record interface{}) error {
+	return replace(ctx, tx.Exec, record)
 }
 
 // Replaces given record and scans the replaceed row back to the given row.
-func (tx *Tx) ReplaceAndRead(record interface{}) error {
-	return replaceAndRead(tx.Exec, tx.Query, record)
+func (tx *Tx) ReplaceAndRead(ctx context.Context, record interface{}) error {
+	return replaceAndRead(ctx, tx.Exec, tx.Query, record)
 }
 
 // Run a select query on the databaase (w/ given parameters optionally) and scan the result(s) to the
@@ -71,19 +70,19 @@ func (tx *Tx) ReplaceAndRead(record interface{}) error {
 //
 // users := &[]*User{}
 // err := tx.Read(users, "SELECT * FROM users", 1)
-func (tx *Tx) Read(scanTo interface{}, params ...interface{}) error {
-	return read(tx.Query, scanTo, params)
+func (tx *Tx) Read(ctx context.Context, scanTo interface{}, params ...interface{}) error {
+	return read(ctx, tx.Query, scanTo, params)
 }
 
 // Run an update query on the transaction, finding out the primary-key field of the given row.
-func (tx *Tx) Update(record interface{}) error {
-	return mustUpdate(tx.Exec, record)
+func (tx *Tx) Update(ctx context.Context, record interface{}) error {
+	return mustUpdate(ctx, tx.Exec, record)
 }
 
 // Executes a DELETE query on the transaction for given struct record. It matches
 // the database row by finding out the primary key field defined in the table schema.
-func (tx *Tx) Delete(record interface{}) error {
-	return mustDelete(tx.Exec, record)
+func (tx *Tx) Delete(ctx context.Context, record interface{}) error {
+	return mustDelete(ctx, tx.Exec, record)
 }
 
 func (tx *Tx) Begin(ctx context.Context, readOnly bool) (*Tx, error) {

@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/azer/crud/v2/sql"
-	"github.com/labstack/gommon/random"
 )
 
-type ExecFn func(string, ...interface{}) (stdsql.Result, error)
-type QueryFn func(string, ...interface{}) (*stdsql.Rows, error)
+type ExecFn func(context.Context, string, ...interface{}) (stdsql.Result, error)
+type QueryFn func(context.Context, string, ...interface{}) (*stdsql.Rows, error)
 
 type DB struct {
 	Client *stdsql.DB
@@ -24,48 +23,48 @@ func (db *DB) Ping() error {
 }
 
 // Run any query on the database client, passing parameters optionally. Returns sql.Result.
-func (db *DB) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
+func (db *DB) Exec(ctx context.Context, sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
-	result, error := db.Client.Exec(sql, params...)
+	result, error := db.Client.ExecContext(ctx, sql, params...)
 	slog.Debug("Executed SQL query", "sql", sql, "took", time.Since(start))
 	return result, error
 }
 
 // Run any query on the database client, passing parameters optionally. Its difference with
 // `Exec` method is returning `sql.Rows` instead of `sql.Result`.
-func (db *DB) Query(sql string, params ...interface{}) (*stdsql.Rows, error) {
+func (db *DB) Query(ctx context.Context, sql string, params ...interface{}) (*stdsql.Rows, error) {
 	start := time.Now()
-	result, error := db.Client.Query(sql, params...)
+	result, error := db.Client.QueryContext(ctx, sql, params...)
 	slog.Debug("Ran SQL query", "sql", sql, "took", time.Since(start))
 	return result, error
 }
 
 // Takes any valid struct and creates a SQL table from it.
-func (db *DB) CreateTable(st interface{}, ifexists bool) error {
+func (db *DB) CreateTable(ctx context.Context, st interface{}, ifexists bool) error {
 	t, err := NewTable(st)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(sql.NewTableQuery(t.SQLName, t.SQLOptions(), ifexists))
+	_, err = db.Exec(ctx, sql.NewTableQuery(t.SQLName, t.SQLOptions(), ifexists))
 	return err
 }
 
 // Takes any valid struct, finds out its corresponding SQL table and drops it.
-func (db *DB) DropTable(st interface{}, ifexists bool) error {
+func (db *DB) DropTable(ctx context.Context, st interface{}, ifexists bool) error {
 	t, err := NewTable(st)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(sql.DropTableQuery(t.SQLName, true))
+	_, err = db.Exec(ctx, sql.DropTableQuery(t.SQLName, true))
 	return err
 }
 
 // Creates multiple tables from given any amount of structs. Calls `CreateTable` internally.
-func (db *DB) CreateTables(structs ...interface{}) error {
+func (db *DB) CreateTables(ctx context.Context, structs ...interface{}) error {
 	for _, st := range structs {
-		if err := db.CreateTable(st, true); err != nil {
+		if err := db.CreateTable(ctx, st, true); err != nil {
 			return err
 		}
 	}
@@ -74,9 +73,9 @@ func (db *DB) CreateTables(structs ...interface{}) error {
 }
 
 // Drops correspoinding SQL tables of the given structs.
-func (db *DB) DropTables(structs ...interface{}) error {
+func (db *DB) DropTables(ctx context.Context, structs ...interface{}) error {
 	for _, st := range structs {
-		if err := db.DropTable(st, true); err != nil {
+		if err := db.DropTable(ctx, st, true); err != nil {
 			return err
 		}
 	}
@@ -85,12 +84,12 @@ func (db *DB) DropTables(structs ...interface{}) error {
 }
 
 // Drops (if they exist) and re-creates corresponding SQL tables for the given structs.
-func (db *DB) ResetTables(structs ...interface{}) error {
-	if err := db.DropTables(structs...); err != nil {
+func (db *DB) ResetTables(ctx context.Context, structs ...interface{}) error {
+	if err := db.DropTables(ctx, structs...); err != nil {
 		return err
 	}
 
-	if err := db.CreateTables(structs...); err != nil {
+	if err := db.CreateTables(ctx, structs...); err != nil {
 		return err
 	}
 
@@ -98,38 +97,38 @@ func (db *DB) ResetTables(structs ...interface{}) error {
 }
 
 // Runs a query to check if the given table exists and returns bool
-func (db *DB) CheckIfTableExists(name string) bool {
+func (db *DB) CheckIfTableExists(ctx context.Context, name string) bool {
 	var result string
 	err := db.Client.QueryRow(sql.ShowTablesLikeQuery(name)).Scan(&result)
 	return err == nil && result == name
 }
 
 // Inserts given record into the database, generating an insert query for it.
-func (db *DB) Create(record interface{}) error {
-	return create(db.Exec, record)
+func (db *DB) Create(ctx context.Context, record interface{}) error {
+	return create(ctx, db.Exec, record)
 }
 
-func (db *DB) CreateAndGetResult(record interface{}) (stdsql.Result, error) {
-	return createAndGetResult(db.Exec, record)
+func (db *DB) CreateAndGetResult(ctx context.Context, record interface{}) (stdsql.Result, error) {
+	return createAndGetResult(ctx, db.Exec, record)
 }
 
 // Inserts given record and scans the inserted row back to the given row.
-func (db *DB) CreateAndRead(record interface{}) error {
-	return createAndRead(db.Exec, db.Query, record)
+func (db *DB) CreateAndRead(ctx context.Context, record interface{}) error {
+	return createAndRead(ctx, db.Exec, db.Query, record)
 }
 
 // Replaces given record into the database, generating a replace query for it.
-func (db *DB) Replace(record interface{}) error {
-	return replace(db.Exec, record)
+func (db *DB) Replace(ctx context.Context, record interface{}) error {
+	return replace(ctx, db.Exec, record)
 }
 
-func (db *DB) ReplaceAndGetResult(record interface{}) (stdsql.Result, error) {
-	return replaceAndGetResult(db.Exec, record)
+func (db *DB) ReplaceAndGetResult(ctx context.Context, record interface{}) (stdsql.Result, error) {
+	return replaceAndGetResult(ctx, db.Exec, record)
 }
 
 // Replaces given record and scans the replaceed row back to the given row.
-func (db *DB) ReplaceAndRead(record interface{}) error {
-	return replaceAndRead(db.Exec, db.Query, record)
+func (db *DB) ReplaceAndRead(ctx context.Context, record interface{}) error {
+	return replaceAndRead(ctx, db.Exec, db.Query, record)
 }
 
 // Runs given SQL query and scans the result rows into the given target interface. The target
@@ -142,20 +141,20 @@ func (db *DB) ReplaceAndRead(record interface{}) error {
 //
 // users := &[]*User{}
 // err := tx.Read(users, "SELECT * FROM users", 1)
-func (db *DB) Read(scanTo interface{}, params ...interface{}) error {
-	return read(db.Query, scanTo, params)
+func (db *DB) Read(ctx context.Context, scanTo interface{}, params ...interface{}) error {
+	return read(ctx, db.Query, scanTo, params)
 }
 
 // Finding out the primary-key field of the given row, updates the corresponding record on the table
 // with the values in the given record.
-func (db *DB) Update(record interface{}) error {
-	return mustUpdate(db.Exec, record)
+func (db *DB) Update(ctx context.Context, record interface{}) error {
+	return mustUpdate(ctx, db.Exec, record)
 }
 
 // Generates and executes a DELETE query for given struct record. It matches the database row by finding
 // out the primary key field defined in the table schema.
-func (db *DB) Delete(record interface{}) error {
-	return mustDelete(db.Exec, record)
+func (db *DB) Delete(ctx context.Context, record interface{}) error {
+	return mustDelete(ctx, db.Exec, record)
 }
 
 // Start a DB transaction. It returns an interface w/ most of the methods DB provides.
@@ -168,19 +167,8 @@ func (db *DB) Begin(ctx context.Context, readOnly bool) (*Tx, error) {
 	}
 
 	return &Tx{
-		Client:  client,
-		Context: ctx,
+		Client: client,
 	}, nil
-}
-
-// Return a database client that wraps underlying SQL execution methods with the context specified
-func (db *DB) WithContext(ctx context.Context) *WithContext {
-	return &WithContext{
-		Context: ctx,
-		DB:      db.Client,
-		Id:      random.String(32),
-		IdKey:   "Id",
-	}
 }
 
 // Establish DB connection and return a crud.DB instance w/ methods needed for accessing / writing the database.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -20,7 +21,9 @@ func main() {
 		panic(err)
 	}
 
-	if err := DB.CreateTables(User{}); err != nil {
+	ctx := context.Background()
+
+	if err := DB.CreateTables(ctx, User{}); err != nil {
 		panic(err)
 	}
 
@@ -29,12 +32,12 @@ func main() {
 		LastName:  "Koculu",
 	}
 
-	if err := DB.Create(&azer); err != nil {
+	if err := DB.Create(ctx, &azer); err != nil {
 		panic(err)
 	}
 
 	copy := User{}
-	if err := DB.Read(&copy, "SELECT * FROM users WHERE first_name='Azer'"); err != nil {
+	if err := DB.Read(ctx, &copy, "SELECT * FROM users WHERE first_name='Azer'"); err != nil {
 		panic(err)
 	}
 

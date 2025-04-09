@@ -1,6 +1,7 @@
 package crud
 
 import (
+	"context"
 	stdsql "database/sql"
 	"errors"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"github.com/azer/crud/v2/sql"
 )
 
-func deleteRow(exec ExecFn, record interface{}) (stdsql.Result, error) {
+func deleteRow(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {
 	table, err := NewTable(record)
 
 	if err != nil {
@@ -21,11 +22,11 @@ func deleteRow(exec ExecFn, record interface{}) (stdsql.Result, error) {
 		return nil, errors.New(fmt.Sprintf("Table '%s' (%s) doesn't have a primary-key field", table.Name, table.SQLName))
 	}
 
-	return exec(sql.DeleteQuery(table.SQLName, pk.SQL.Name), meta.StructFieldValue(record, pk.Name))
+	return exec(ctx, sql.DeleteQuery(table.SQLName, pk.SQL.Name), meta.StructFieldValue(record, pk.Name))
 }
 
-func mustDelete(exec ExecFn, record interface{}) error {
-	result, err := deleteRow(exec, record)
+func mustDelete(ctx context.Context, exec ExecFn, record interface{}) error {
+	result, err := deleteRow(ctx, exec, record)
 	if err != nil {
 		return err
 	}

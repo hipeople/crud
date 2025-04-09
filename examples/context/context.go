@@ -26,7 +26,9 @@ func main() {
 		panic(err)
 	}
 
-	if err := DB.CreateTables(User{}); err != nil {
+	ctx := context.Background()
+
+	if err := DB.CreateTables(ctx, User{}); err != nil {
 		panic(err)
 	}
 
@@ -38,14 +40,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
-	db := DB.WithContext(ctx)
-
 	row := User{
 		FirstName: "Foo",
 		LastName:  "Bar",
 	}
 
-	if err := db.CreateAndRead(&row); err != nil {
+	if err := DB.CreateAndRead(ctx, &row); err != nil {
 		panic(err)
 	}
 
