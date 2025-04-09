@@ -38,7 +38,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
-	tx, err := DB.Begin(ctx)
+	tx, err := DB.Begin(ctx, false)
 	if err != nil {
 		panic(err)
 	}

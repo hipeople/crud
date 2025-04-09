@@ -17,7 +17,7 @@ type Tx struct {
 func (tx *Tx) Exec(sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
 	result, err := tx.Client.ExecContext(tx.Context, sql, params...)
-	slog.DebugContext(tx.Context, "Executed SQL query", "sql", sql, "took", time.Since(start))
+	slog.DebugContext(tx.Context, "Executed SQL query", "sql", sql, "values", params, "took", time.Since(start))
 	return result, err
 }
 
@@ -86,6 +86,6 @@ func (tx *Tx) Delete(record interface{}) error {
 	return mustDelete(tx.Exec, record)
 }
 
-func (tx *Tx) Begin(ctx context.Context) (*Tx, error) {
+func (tx *Tx) Begin(ctx context.Context, readOnly bool) (*Tx, error) {
 	return nil, fmt.Errorf("can't created nested transactions")
 }

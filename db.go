@@ -159,8 +159,10 @@ func (db *DB) Delete(record interface{}) error {
 }
 
 // Start a DB transaction. It returns an interface w/ most of the methods DB provides.
-func (db *DB) Begin(ctx context.Context) (*Tx, error) {
-	client, err := db.Client.Begin()
+func (db *DB) Begin(ctx context.Context, readOnly bool) (*Tx, error) {
+	client, err := db.Client.BeginTx(ctx, &stdsql.TxOptions{
+		ReadOnly: readOnly,
+	})
 	if err != nil {
 		return nil, err
 	}

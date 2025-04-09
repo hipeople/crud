@@ -12,7 +12,7 @@ import (
 func TestSuccessfulCommit(t *testing.T) {
 	assert.Nil(t, CreateUserProfiles())
 
-	tx, err := DB.Begin(context.Background())
+	tx, err := DB.Begin(context.Background(), true)
 	assert.Nil(t, err)
 
 	n := UserProfile{}
@@ -43,7 +43,7 @@ func TestSuccessfulCommit(t *testing.T) {
 func TestRollback(t *testing.T) {
 	assert.Nil(t, CreateUserProfiles())
 
-	tx, err := DB.Begin(context.Background())
+	tx, err := DB.Begin(context.Background(), false)
 	assert.Nil(t, err)
 
 	err = tx.Create(&UserProfile{
