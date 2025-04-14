@@ -1,6 +1,7 @@
 package crud_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,7 +9,9 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	err := DB.ResetTables(UserProfile{})
+	ctx := context.Background()
+
+	err := DB.ResetTables(ctx, UserProfile{})
 	assert.Nil(t, err)
 
 	azer := UserProfile{
@@ -17,14 +20,16 @@ func TestCreate(t *testing.T) {
 		Email: "azer@roadbeats.com",
 	}
 
-	err = DB.Create(azer)
+	err = DB.Create(ctx, azer)
 	assert.Nil(t, err)
 
-	DB.DropTables(UserProfile{})
+	DB.DropTables(ctx, UserProfile{})
 }
 
 func TestCreateAndRead(t *testing.T) {
-	DB.ResetTables(UserProfile{})
+	ctx := context.Background()
+
+	DB.ResetTables(ctx, UserProfile{})
 
 	azer := UserProfile{
 		Name:  "Azer",
@@ -33,30 +38,34 @@ func TestCreateAndRead(t *testing.T) {
 	}
 
 	assert.Equal(t, azer.Id, 0)
-	err := DB.CreateAndRead(&azer)
+	err := DB.CreateAndRead(ctx, &azer)
 	assert.Nil(t, err)
 	assert.Equal(t, azer.Id, 1)
 
-	DB.DropTables(UserProfile{})
+	DB.DropTables(ctx, UserProfile{})
 }
 
 func TestCreateEmpty(t *testing.T) {
-	DB.ResetTables(UserProfile{})
+	ctx := context.Background()
+
+	DB.ResetTables(ctx, UserProfile{})
 
 	azer := UserProfile{
 		Name: "Azer",
 	}
 
-	err := DB.Create(azer)
+	err := DB.Create(ctx, azer)
 	assert.Nil(t, err)
 
-	DB.DropTables(UserProfile{})
+	DB.DropTables(ctx, UserProfile{})
 }
 
 func TestCreatingRenamedTableRow(t *testing.T) {
 	t.Skip("timestamp not working with MariaDB")
 
-	DB.ResetTables(Post{})
+	ctx := context.Background()
+
+	DB.ResetTables(ctx, Post{})
 
 	p := Post{
 		Title:     "Foo",
@@ -66,9 +75,9 @@ func TestCreatingRenamedTableRow(t *testing.T) {
 	}
 
 	assert.Equal(t, p.Id, 0)
-	err := DB.CreateAndRead(&p)
+	err := DB.CreateAndRead(ctx, &p)
 	assert.Nil(t, err)
 	assert.Equal(t, p.Id, 1)
 
-	DB.DropTables(Post{})
+	DB.DropTables(ctx, Post{})
 }

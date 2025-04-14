@@ -1,56 +1,57 @@
 package crud
 
 import (
+	"context"
 	stdsql "database/sql"
 	"fmt"
 
 	"github.com/azer/crud/v2/sql"
 )
 
-func createAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) {
+func createAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {
 	row, columns, values, err := valuesForRecord(record)
 	if err != nil {
 		return nil, err
 	}
 
-	return exec(sql.InsertQuery(row.SQLTableName, columns), values...)
+	return exec(ctx, sql.InsertQuery(row.SQLTableName, columns), values...)
 }
 
-func create(exec ExecFn, record interface{}) error {
-	_, err := createAndGetResult(exec, record)
+func create(ctx context.Context, exec ExecFn, record interface{}) error {
+	_, err := createAndGetResult(ctx, exec, record)
 	return err
 }
 
-func createAndRead(exec ExecFn, query QueryFn, record interface{}) error {
-	result, err := createAndGetResult(exec, record)
+func createAndRead(ctx context.Context, exec ExecFn, query QueryFn, record interface{}) error {
+	result, err := createAndGetResult(ctx, exec, record)
 	if err != nil {
 		return err
 	}
 
-	return readLastInsert(query, record, result)
+	return readLastInsert(ctx, query, record, result)
 }
 
-func replaceAndGetResult(exec ExecFn, record interface{}) (stdsql.Result, error) {
+func replaceAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {
 	row, columns, values, err := valuesForRecord(record)
 	if err != nil {
 		return nil, err
 	}
 
-	return exec(sql.ReplaceQuery(row.SQLTableName, columns), values...)
+	return exec(ctx, sql.ReplaceQuery(row.SQLTableName, columns), values...)
 }
 
-func replace(exec ExecFn, record interface{}) error {
-	_, err := replaceAndGetResult(exec, record)
+func replace(ctx context.Context, exec ExecFn, record interface{}) error {
+	_, err := replaceAndGetResult(ctx, exec, record)
 	return err
 }
 
-func replaceAndRead(exec ExecFn, query QueryFn, record interface{}) error {
-	result, err := replaceAndGetResult(exec, record)
+func replaceAndRead(ctx context.Context, exec ExecFn, query QueryFn, record interface{}) error {
+	result, err := replaceAndGetResult(ctx, exec, record)
 	if err != nil {
 		return err
 	}
 
-	return readLastInsert(query, record, result)
+	return readLastInsert(ctx, query, record, result)
 }
 
 func valuesForRecord(record interface{}) (*Row, []string, []interface{}, error) {
@@ -70,7 +71,7 @@ func valuesForRecord(record interface{}) (*Row, []string, []interface{}, error) 
 	return row, columns, values, nil
 }
 
-func readLastInsert(query QueryFn, record interface{}, result stdsql.Result) error {
+func readLastInsert(ctx context.Context, query QueryFn, record interface{}, result stdsql.Result) error {
 	id, err := result.LastInsertId()
 	if err != nil {
 		return err
@@ -87,5 +88,5 @@ func readLastInsert(query QueryFn, record interface{}, result stdsql.Result) err
 		id,
 	}
 
-	return read(query, record, params)
+	return read(ctx, query, record, params)
 }

@@ -1,6 +1,7 @@
 package crud_test
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -30,22 +31,26 @@ func TestDeleteNotMatching(t *testing.T) {
 }*/
 
 func TestMustDelete(t *testing.T) {
-	require.NoError(t, CreateUserProfiles())
+	ctx := context.Background()
+
+	require.NoError(t, CreateUserProfiles(ctx))
 
 	nova := UserProfile{}
-	err := DB.Read(&nova, "SELECT * FROM user_profiles WHERE name = 'Nova'")
+	err := DB.Read(ctx, &nova, "SELECT * FROM user_profiles WHERE name = 'Nova'")
 	require.NoError(t, err)
 	require.NotZero(t, nova.Id)
 
-	require.NoError(t, DB.Delete(nova))
+	require.NoError(t, DB.Delete(ctx, nova))
 
 	novac := UserProfile{}
-	err = DB.Read(&novac, "SELECT * FROM user_profiles WHERE name = 'Nova'")
+	err = DB.Read(ctx, &novac, "SELECT * FROM user_profiles WHERE name = 'Nova'")
 	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestMustDeleteNotMatching(t *testing.T) {
-	assert.NotNil(t, DB.Delete(&UserProfile{
+	ctx := context.Background()
+
+	assert.NotNil(t, DB.Delete(ctx, &UserProfile{
 		Id:   123,
 		Name: "Yolo",
 	}))
