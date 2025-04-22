@@ -91,7 +91,7 @@ func NewTableConfigQuery(fields []*Options) string {
 		}
 	}
 
-	return fmt.Sprintf("%s", autoIncrement)
+	return autoIncrement
 }
 
 func DropTableQuery(name string, ifExists bool) string {
