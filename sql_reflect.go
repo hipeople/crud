@@ -1,8 +1,6 @@
 package crud
 
 import (
-	"fmt"
-
 	"github.com/azer/crud/v2/meta"
 	"github.com/azer/snakecase"
 	"github.com/jinzhu/inflection"
@@ -16,7 +14,7 @@ func SQLTableNameOf(any interface{}) string {
 		return customTableName
 	}
 
-	return escapeTableName(snakecase.SnakeCase(inflection.Plural(meta.TypeNameOf(any))))
+	return snakecase.SnakeCase(inflection.Plural(meta.TypeNameOf(any)))
 }
 
 func LookupCustomTableName(any interface{}) (string, bool) {
@@ -31,13 +29,9 @@ func LookupCustomTableName(any interface{}) (string, bool) {
 
 	for _, f := range fields {
 		if len(f.SQL.TableName) > 0 {
-			return escapeTableName(f.SQL.TableName), true
+			return f.SQL.TableName, true
 		}
 	}
 
 	return "", false
-}
-
-func escapeTableName(tableName string) string {
-	return fmt.Sprintf("`%s`", tableName)
 }

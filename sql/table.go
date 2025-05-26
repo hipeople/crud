@@ -101,7 +101,7 @@ func DropTableQuery(name string, ifExists bool) string {
 		ext = " IF EXISTS"
 	}
 
-	return fmt.Sprintf("DROP TABLE%s %s", ext, name)
+	return fmt.Sprintf("DROP TABLE%s `%s`", ext, name)
 }
 
 func ShowTablesLikeQuery(name string) string {
@@ -111,24 +111,24 @@ func ShowTablesLikeQuery(name string) string {
 func InsertQuery(tableName string, columnNames []string) string {
 	questionMarks := repeatComma(len(columnNames), "?")
 
-	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+	return fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)",
 		tableName, strings.Join(quoteColumnNames(columnNames), ","), questionMarks)
 }
 
 func ReplaceQuery(tableName string, columnNames []string) string {
 	questionMarks := repeatComma(len(columnNames), "?")
 
-	return fmt.Sprintf("REPLACE INTO %s (%s) VALUES (%s)",
+	return fmt.Sprintf("REPLACE INTO `%s` (%s) VALUES (%s)",
 		tableName, strings.Join(quoteColumnNames(columnNames), ","), questionMarks)
 }
 
 func SelectQuery(tableName string, columnNames []string) string {
-	columns := strings.Join(columnNames, ",")
-	if columns == "" {
-		columns = "*"
+	columns := "*"
+	if len(columnNames) > 0 {
+		columns = strings.Join(quoteColumnNames(columnNames), ", ")
 	}
 
-	return fmt.Sprintf("SELECT %s FROM %s", columns, tableName)
+	return fmt.Sprintf("SELECT %s FROM `%s`", columns, tableName)
 }
 
 func UpdateQuery(tableName, index string, columnNames []string) string {
@@ -140,7 +140,7 @@ func UpdateAllQuery(tableName string, columnNames []string) string {
 }
 
 func DeleteQuery(tableName, index string) string {
-	return fmt.Sprintf("DELETE FROM %s WHERE %s=?", tableName, index)
+	return fmt.Sprintf("DELETE FROM `%s` WHERE %s=?", tableName, index)
 }
 
 func quoteColumnNames(columns []string) []string {
