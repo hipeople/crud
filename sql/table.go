@@ -144,13 +144,12 @@ func DeleteQuery(tableName, index string) string {
 }
 
 func quoteColumnNames(columns []string) []string {
-	quoted := []string{}
-
+	var cols []string
 	for _, c := range columns {
-		quoted = append(quoted, fmt.Sprintf("`%s`", c))
+		cols = append(cols, "`"+c+"`")
 	}
 
-	return quoted
+	return cols
 }
 
 func repeatComma(num int, char string) string {
