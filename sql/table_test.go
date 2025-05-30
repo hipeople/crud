@@ -77,17 +77,17 @@ func TestNewTableQuery(t *testing.T) {
 }
 
 func TestDropTableQuery(t *testing.T) {
-	assert.Equal(t, sql.DropTableQuery("yolo", false), "DROP TABLE yolo")
-	assert.Equal(t, sql.DropTableQuery("yolo", true), "DROP TABLE IF EXISTS yolo")
+	assert.Equal(t, sql.DropTableQuery("yolo", false), "DROP TABLE `yolo`")
+	assert.Equal(t, sql.DropTableQuery("yolo", true), "DROP TABLE IF EXISTS `yolo`")
 }
 
 func TestSelectQuery(t *testing.T) {
-	assert.Equal(t, sql.SelectQuery("yolo", []string{"foo", "bar"}), "SELECT foo,bar FROM yolo")
-	assert.Equal(t, sql.SelectQuery("yolo", []string{}), "SELECT * FROM yolo")
+	assert.Equal(t, sql.SelectQuery("yolo", []string{"foo", "bar"}), "SELECT `foo`, `bar` FROM `yolo`")
+	assert.Equal(t, sql.SelectQuery("yolo", []string{}), "SELECT * FROM `yolo`")
 }
 
 func TestInsertQuery(t *testing.T) {
-	assert.Equal(t, sql.InsertQuery("yolo", []string{"name", "email", "age"}), "INSERT INTO yolo (`name`,`email`,`age`) VALUES (?,?,?)")
+	assert.Equal(t, sql.InsertQuery("yolo", []string{"name", "email", "age"}), "INSERT INTO `yolo` (`name`,`email`,`age`) VALUES (?,?,?)")
 }
 
 func TestUpdateQuery(t *testing.T) {
@@ -95,5 +95,5 @@ func TestUpdateQuery(t *testing.T) {
 }
 
 func TestDeleteQuery(t *testing.T) {
-	assert.Equal(t, sql.DeleteQuery("yolo", "id"), "DELETE FROM yolo WHERE id=?")
+	assert.Equal(t, sql.DeleteQuery("yolo", "id"), "DELETE FROM `yolo` WHERE id=?")
 }
