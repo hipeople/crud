@@ -136,7 +136,7 @@ func UpdateQuery(tableName, index string, columnNames []string) string {
 }
 
 func UpdateAllQuery(tableName string, columnNames []string) string {
-	return fmt.Sprintf("UPDATE %s SET %s=?", tableName, strings.Join(quoteColumnNames(columnNames), "=?, "))
+	return fmt.Sprintf("UPDATE `%s` SET %s=?", tableName, strings.Join(quoteColumnNames(columnNames), "=?, "))
 }
 
 func DeleteQuery(tableName, index string) string {
