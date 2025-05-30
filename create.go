@@ -84,7 +84,7 @@ func readLastInsert(ctx context.Context, query QueryFn, record interface{}, resu
 	}
 
 	params := []interface{}{
-		fmt.Sprintf("SELECT * FROM %s WHERE %s = ?", table.SQLName, table.PrimaryKeyField().SQL.Name),
+		fmt.Sprintf("SELECT * FROM `%s` WHERE `%s` = ?", table.SQLName, table.PrimaryKeyField().SQL.Name),
 		id,
 	}
 
