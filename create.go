@@ -4,6 +4,8 @@ import (
 	"context"
 	stdsql "database/sql"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/azer/crud/v2/sql"
 )
@@ -60,10 +62,12 @@ func valuesForRecord(record interface{}) (*Row, []string, []interface{}, error) 
 		return nil, nil, nil, err
 	}
 
-	columns := []string{}
-	values := []interface{}{}
+	sqlValues := row.SQLValues()
+	columns := make([]string, 0, len(sqlValues))
+	values := make([]interface{}, 0, len(sqlValues))
 
-	for c, v := range row.SQLValues() {
+	for _, c := range slices.Sorted(maps.Keys(sqlValues)) {
+		v := sqlValues[c]
 		columns = append(columns, c)
 		values = append(values, v)
 	}
