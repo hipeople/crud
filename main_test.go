@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	DB, err = crud.Connect("mysql", connStr)
+	DB, err = crud.Connect("mysql", connStr, nil)
 	if err != nil {
 		errf("connect: %v", err)
 		return
