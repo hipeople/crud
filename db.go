@@ -14,8 +14,7 @@ type QueryFn func(context.Context, string, ...interface{}) (*stdsql.Rows, error)
 
 type DB struct {
 	Client *stdsql.DB
-	Driver string
-	URL    string
+	Logger *slog.Logger
 }
 
 func (db *DB) Ping() error {
@@ -25,18 +24,26 @@ func (db *DB) Ping() error {
 // Run any query on the database client, passing parameters optionally. Returns sql.Result.
 func (db *DB) Exec(ctx context.Context, sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
-	result, error := db.Client.ExecContext(ctx, sql, params...)
-	slog.DebugContext(ctx, "Executed SQL query", "sql", sql, "took", time.Since(start))
-	return result, error
+	result, err := db.Client.ExecContext(ctx, sql, params...)
+
+	if db.Logger != nil {
+		db.Logger.DebugContext(ctx, "Executed SQL query", "sql", sql, "took", time.Since(start), "error", err)
+	}
+
+	return result, err
 }
 
 // Run any query on the database client, passing parameters optionally. Its difference with
 // `Exec` method is returning `sql.Rows` instead of `sql.Result`.
 func (db *DB) Query(ctx context.Context, sql string, params ...interface{}) (*stdsql.Rows, error) {
 	start := time.Now()
-	result, error := db.Client.QueryContext(ctx, sql, params...)
-	slog.DebugContext(ctx, "Ran SQL query", "sql", sql, "took", time.Since(start))
-	return result, error
+	result, err := db.Client.QueryContext(ctx, sql, params...)
+
+	if db.Logger != nil {
+		db.Logger.DebugContext(ctx, "Ran SQL query", "sql", sql, "took", time.Since(start), "error", err)
+	}
+
+	return result, err
 }
 
 // Takes any valid struct and creates a SQL table from it.
@@ -168,12 +175,13 @@ func (db *DB) Begin(ctx context.Context, readOnly bool) (*Tx, error) {
 
 	return &Tx{
 		Client: client,
+		Logger: db.Logger,
 	}, nil
 }
 
 // Establish DB connection and return a crud.DB instance w/ methods needed for accessing / writing the database.
 // Example call: Connect("mysql", "root:123456@tcp(localhost:3306)/database_name?parseTime=true")
-func Connect(driver, url string) (*DB, error) {
+func Connect(driver, url string, logger *slog.Logger) (*DB, error) {
 	client, err := stdsql.Open(driver, url)
 	if err != nil {
 		return nil, err
@@ -181,7 +189,6 @@ func Connect(driver, url string) (*DB, error) {
 
 	return &DB{
 		Client: client,
-		Driver: driver,
-		URL:    url,
+		Logger: logger,
 	}, nil
 }

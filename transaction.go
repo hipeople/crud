@@ -10,13 +10,16 @@ import (
 
 type Tx struct {
 	Client *stdsql.Tx
+	Logger *slog.Logger
 }
 
 // Execute any SQL query on the transaction client. Returns sql.Result.
 func (tx *Tx) Exec(ctx context.Context, sql string, params ...interface{}) (stdsql.Result, error) {
 	start := time.Now()
 	result, err := tx.Client.ExecContext(ctx, sql, params...)
-	slog.DebugContext(ctx, "Executed SQL query", "sql", sql, "took", time.Since(start))
+	if tx.Logger != nil {
+		tx.Logger.DebugContext(ctx, "Executed SQL query", "sql", sql, "took", time.Since(start))
+	}
 	return result, err
 }
 
@@ -24,7 +27,9 @@ func (tx *Tx) Exec(ctx context.Context, sql string, params ...interface{}) (stds
 func (tx *Tx) Query(ctx context.Context, sql string, params ...interface{}) (*stdsql.Rows, error) {
 	start := time.Now()
 	result, err := tx.Client.QueryContext(ctx, sql, params...)
-	slog.DebugContext(ctx, "Ran SQL query", "sql", sql, "took", time.Since(start))
+	if tx.Logger != nil {
+		tx.Logger.DebugContext(ctx, "Ran SQL query", "sql", sql, "took", time.Since(start))
+	}
 	return result, err
 }
 
