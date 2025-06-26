@@ -21,7 +21,7 @@ type User struct {
 
 func main() {
 	var err error
-	DB, err = crud.Connect("mysql", os.Getenv("DATABASE_URL"))
+	DB, err = crud.Connect("mysql", os.Getenv("DATABASE_URL"), nil)
 	if err != nil {
 		panic(err)
 	}
