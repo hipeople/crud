@@ -41,6 +41,7 @@ var TypeDict = map[string]string{
 	"*bool":           "tinyint",
 	"*[]byte":         "blob",
 	"*[]uint8":        "blob",
+	"[]string":        "json",
 	"sql.NullFloat32": "float",
 	"sql.NullFloat64": "float",
 	"sql.NullInt64":   "bigint",
