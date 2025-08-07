@@ -35,7 +35,7 @@ func createAndRead(ctx context.Context, exec ExecFn, query QueryFn, record inter
 	return readLastInsert(ctx, query, record, result)
 }
 
-func createBulk(ctx context.Context, exec ExecFn, value any) error {
+func bulkCreate(ctx context.Context, exec ExecFn, value any) error {
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Slice {
 		return errors.New("records must be a slice")

@@ -193,6 +193,6 @@ func Connect(driver, url string, logger *slog.Logger) (*DB, error) {
 	}, nil
 }
 
-func (db *DB) CreateBulk(ctx context.Context, records any) error {
-	return createBulk(ctx, db.Exec, records)
+func (db *DB) BulkCreate(ctx context.Context, records any) error {
+	return bulkCreate(ctx, db.Exec, records)
 }
