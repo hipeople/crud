@@ -2,6 +2,7 @@ package sql
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -116,12 +117,8 @@ func InsertQuery(tableName string, columnNames []string) string {
 }
 
 func InsertBulkQuery(tableName string, columnNames []string, numRecords int) string {
-	questionMarks := make([]string, 0, numRecords)
 	pattern := fmt.Sprintf("(%s)", repeatComma(len(columnNames), "?"))
-
-	for range numRecords {
-		questionMarks = append(questionMarks, pattern)
-	}
+	questionMarks := slices.Repeat([]string{pattern}, numRecords)
 
 	return fmt.Sprintf("INSERT INTO `%s` (%s) VALUES %s",
 		tableName, strings.Join(quoteColumnNames(columnNames), ","), strings.Join(questionMarks, ","))
