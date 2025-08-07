@@ -53,6 +53,10 @@ func (tx *Tx) CreateAndRead(ctx context.Context, record interface{}) error {
 	return createAndRead(ctx, tx.Exec, tx.Query, record)
 }
 
+func (tx *Tx) BulkCreate(ctx context.Context, records any) error {
+	return bulkCreate(ctx, tx.Exec, records)
+}
+
 // Replace given record to the database.
 func (tx *Tx) Replace(ctx context.Context, record interface{}) error {
 	return replace(ctx, tx.Exec, record)
