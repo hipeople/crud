@@ -115,6 +115,16 @@ func InsertQuery(tableName string, columnNames []string) string {
 		tableName, strings.Join(quoteColumnNames(columnNames), ","), questionMarks)
 }
 
+func InsertBulkQuery(tableName string, columnNames []string, numRecords int) string {
+	questionMarks := []string{}
+	for range numRecords {
+		questionMarks = append(questionMarks, fmt.Sprintf("(%s)", repeatComma(len(columnNames), "?")))
+	}
+
+	return fmt.Sprintf("INSERT INTO `%s` (%s) VALUES %s",
+		tableName, strings.Join(quoteColumnNames(columnNames), ","), strings.Join(questionMarks, ","))
+}
+
 func ReplaceQuery(tableName string, columnNames []string) string {
 	questionMarks := repeatComma(len(columnNames), "?")
 

@@ -90,6 +90,10 @@ func TestInsertQuery(t *testing.T) {
 	assert.Equal(t, sql.InsertQuery("yolo", []string{"name", "email", "age"}), "INSERT INTO `yolo` (`name`,`email`,`age`) VALUES (?,?,?)")
 }
 
+func TestInsertBulkQuery(t *testing.T) {
+	assert.Equal(t, sql.InsertBulkQuery("yolo", []string{"name", "email", "age"}, 3), "INSERT INTO `yolo` (`name`,`email`,`age`) VALUES (?,?,?),(?,?,?),(?,?,?)")
+}
+
 func TestUpdateQuery(t *testing.T) {
 	assert.Equal(t, sql.UpdateQuery("yolo", "id", []string{"name", "email", "age"}), "UPDATE `yolo` SET `name`=?, `email`=?, `age`=? WHERE id=?")
 }

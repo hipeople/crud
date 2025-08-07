@@ -3,8 +3,10 @@ package crud
 import (
 	"context"
 	stdsql "database/sql"
+	"errors"
 	"fmt"
 	"maps"
+	"reflect"
 	"slices"
 
 	"github.com/azer/crud/v2/sql"
@@ -31,6 +33,38 @@ func createAndRead(ctx context.Context, exec ExecFn, query QueryFn, record inter
 	}
 
 	return readLastInsert(ctx, query, record, result)
+}
+
+func createBulk(ctx context.Context, exec ExecFn, value any) error {
+	v := reflect.ValueOf(value)
+	if v.Kind() != reflect.Slice {
+		return errors.New("records must be a slice")
+	}
+
+	records := make([]any, 0, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		records = append(records, v.Index(i).Interface())
+	}
+
+	row, columns, _, err := valuesForRecord(records[0])
+	if err != nil {
+		return err
+	}
+
+	query := sql.InsertBulkQuery(row.SQLTableName, columns, len(records))
+	values := make([]interface{}, 0, len(records)*len(columns))
+
+	for _, record := range records {
+		_, _, v, err := valuesForRecord(record)
+		if err != nil {
+			return err
+		}
+
+		values = append(values, v...)
+	}
+
+	_, err = exec(ctx, query, values...)
+	return err
 }
 
 func replaceAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {

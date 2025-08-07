@@ -81,3 +81,42 @@ func TestCreatingRenamedTableRow(t *testing.T) {
 
 	DB.DropTables(ctx, Post{})
 }
+
+func TestCreateBulk(t *testing.T) {
+	ctx := context.Background()
+
+	DB.ResetTables(ctx, UserProfile{})
+
+	users := []UserProfile{
+		{
+			Name:  "Azer",
+			Bio:   "I like photography",
+			Email: "azer@roadbeats.com",
+		},
+		{
+			Name:  "Azer2",
+			Bio:   "I like photography2",
+			Email: "azer2@roadbeats.com",
+		},
+		{
+			Name:  "Azer3",
+			Bio:   "I like photography3",
+			Email: "azer3@roadbeats.com",
+		},
+	}
+
+	err := DB.CreateBulk(ctx, users)
+	assert.Nil(t, err)
+
+	var users2 []UserProfile
+	err = DB.Read(ctx, &users2, "SELECT * FROM user_profiles")
+	assert.Nil(t, err)
+	assert.Equal(t, len(users), 3)
+
+	azer := users2[0]
+	assert.Equal(t, azer.Name, "Azer")
+	assert.Equal(t, azer.Bio, "I like photography")
+	assert.Equal(t, azer.Email, "azer@roadbeats.com")
+
+	DB.DropTables(ctx, UserProfile{})
+}
