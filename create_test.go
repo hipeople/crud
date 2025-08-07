@@ -113,10 +113,11 @@ func TestCreateBulk(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, len(users), 3)
 
-	azer := users2[0]
-	assert.Equal(t, azer.Name, "Azer")
-	assert.Equal(t, azer.Bio, "I like photography")
-	assert.Equal(t, azer.Email, "azer@roadbeats.com")
+	for i, user := range users2 {
+		assert.Equal(t, user.Name, users[i].Name)
+		assert.Equal(t, user.Bio, users[i].Bio)
+		assert.Equal(t, user.Email, users[i].Email)
+	}
 
 	DB.DropTables(ctx, UserProfile{})
 }

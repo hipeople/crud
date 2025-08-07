@@ -116,9 +116,11 @@ func InsertQuery(tableName string, columnNames []string) string {
 }
 
 func InsertBulkQuery(tableName string, columnNames []string, numRecords int) string {
-	questionMarks := []string{}
+	questionMarks := make([]string, 0, numRecords)
+	pattern := fmt.Sprintf("(%s)", repeatComma(len(columnNames), "?"))
+
 	for range numRecords {
-		questionMarks = append(questionMarks, fmt.Sprintf("(%s)", repeatComma(len(columnNames), "?")))
+		questionMarks = append(questionMarks, pattern)
 	}
 
 	return fmt.Sprintf("INSERT INTO `%s` (%s) VALUES %s",
