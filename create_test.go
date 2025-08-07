@@ -105,7 +105,7 @@ func TestCreateBulk(t *testing.T) {
 		},
 	}
 
-	err := DB.CreateBulk(ctx, users)
+	err := DB.BulkCreate(ctx, users)
 	assert.Nil(t, err)
 
 	var users2 []UserProfile
