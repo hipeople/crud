@@ -95,9 +95,9 @@ func TestInsertBulkQuery(t *testing.T) {
 }
 
 func TestUpdateQuery(t *testing.T) {
-	assert.Equal(t, sql.UpdateQuery("yolo", "id", []string{"name", "email", "age"}), "UPDATE `yolo` SET `name`=?, `email`=?, `age`=? WHERE id=?")
+	assert.Equal(t, sql.UpdateQuery("yolo", "id", []string{"name", "email", "age"}), "UPDATE `yolo` SET `name`=?, `email`=?, `age`=? WHERE `id`=?")
 }
 
 func TestDeleteQuery(t *testing.T) {
-	assert.Equal(t, sql.DeleteQuery("yolo", "id"), "DELETE FROM `yolo` WHERE id=?")
+	assert.Equal(t, sql.DeleteQuery("yolo", "id"), "DELETE FROM `yolo` WHERE `id`=?")
 }
