@@ -141,7 +141,7 @@ func SelectQuery(tableName string, columnNames []string) string {
 }
 
 func UpdateQuery(tableName, index string, columnNames []string) string {
-	return fmt.Sprintf("%s WHERE %s=?", UpdateAllQuery(tableName, columnNames), index)
+	return fmt.Sprintf("%s WHERE `%s`=?", UpdateAllQuery(tableName, columnNames), index)
 }
 
 func UpdateAllQuery(tableName string, columnNames []string) string {
@@ -149,7 +149,7 @@ func UpdateAllQuery(tableName string, columnNames []string) string {
 }
 
 func DeleteQuery(tableName, index string) string {
-	return fmt.Sprintf("DELETE FROM `%s` WHERE %s=?", tableName, index)
+	return fmt.Sprintf("DELETE FROM `%s` WHERE `%s`=?", tableName, index)
 }
 
 func quoteColumnNames(columns []string) []string {
