@@ -55,3 +55,19 @@ func TestMustDeleteNotMatching(t *testing.T) {
 		Name: "Yolo",
 	}))
 }
+
+func TestBulkDelete(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, CreateUserProfiles(ctx))
+
+	nova := UserProfile{}
+	err := DB.Read(ctx, &nova, "SELECT * FROM user_profiles WHERE name = 'Nova'")
+	assert.Nil(t, err)
+
+	assert.Nil(t, DB.BulkDelete(ctx, []UserProfile{nova}))
+
+	novac := UserProfile{}
+	err = DB.Read(ctx, &novac, "SELECT * FROM user_profile WHERE name = 'Nova'")
+	assert.NotNil(t, err)
+}

@@ -152,6 +152,14 @@ func DeleteQuery(tableName, index string) string {
 	return fmt.Sprintf("DELETE FROM `%s` WHERE `%s`=?", tableName, index)
 }
 
+func BulkDeleteQuery(tableName, index string, numRecords int) string {
+	pattern := fmt.Sprintf("(%s)", repeatComma(1, "?"))
+	questionMarks := slices.Repeat([]string{pattern}, numRecords)
+
+	return fmt.Sprintf("DELETE FROM `%s` WHERE `%s` IN (%s)",
+		tableName, index, strings.Join(questionMarks, ","))
+}
+
 func quoteColumnNames(columns []string) []string {
 	var cols []string
 	for _, c := range columns {
