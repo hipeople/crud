@@ -57,6 +57,10 @@ func (tx *Tx) BulkCreate(ctx context.Context, records any) error {
 	return bulkCreate(ctx, tx.Exec, records)
 }
 
+func (tx *Tx) BulkDelete(ctx context.Context, records any) error {
+	return mustBulkDelete(ctx, tx.Exec, records)
+}
+
 // Replace given record to the database.
 func (tx *Tx) Replace(ctx context.Context, record interface{}) error {
 	return replace(ctx, tx.Exec, record)

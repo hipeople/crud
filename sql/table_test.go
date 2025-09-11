@@ -101,3 +101,7 @@ func TestUpdateQuery(t *testing.T) {
 func TestDeleteQuery(t *testing.T) {
 	assert.Equal(t, sql.DeleteQuery("yolo", "id"), "DELETE FROM `yolo` WHERE `id`=?")
 }
+
+func TestBulkDeleteQuery(t *testing.T) {
+	assert.Equal(t, sql.BulkDeleteQuery("yolo", "id", 3), "DELETE FROM `yolo` WHERE `id` IN ((?),(?),(?))")
+}

@@ -164,6 +164,10 @@ func (db *DB) Delete(ctx context.Context, record interface{}) error {
 	return mustDelete(ctx, db.Exec, record)
 }
 
+func (db *DB) BulkDelete(ctx context.Context, records interface{}) error {
+	return mustBulkDelete(ctx, db.Exec, records)
+}
+
 // Start a DB transaction. It returns an interface w/ most of the methods DB provides.
 func (db *DB) Begin(ctx context.Context, readOnly bool) (*Tx, error) {
 	client, err := db.Client.BeginTx(ctx, &stdsql.TxOptions{
