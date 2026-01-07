@@ -106,7 +106,7 @@ func TestUpsertWithMixed(t *testing.T) {
 		Id:        1,
 		UserId:    2,
 		Secret:    "secret2",
-		CreatedAt: 100, // Should not change
+		CreatedAt: 999, // Should NOT change because created_at has no-update tag
 		UpdatedAt: 200, // Should update
 	}
 
@@ -120,7 +120,7 @@ func TestUpsertWithMixed(t *testing.T) {
 	assert.Equal(t, result.Id, 1)
 	assert.Equal(t, result.UserId, 2)
 	assert.Equal(t, result.Secret, "secret2")
-	assert.Equal(t, result.CreatedAt, int64(100)) // created_at should be excluded from update
+	assert.Equal(t, result.CreatedAt, int64(100)) // created_at preserved (no-update tag)
 	assert.Equal(t, result.UpdatedAt, int64(200))
 
 	DB.DropTables(ctx, Mixed{})

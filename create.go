@@ -142,16 +142,21 @@ func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 	}
 	query += ") ON DUPLICATE KEY UPDATE "
 
-	// Add update clause (exclude primary key and created_at)
-	updateParts := []string{}
-	primaryKeyName := ""
+	// Build map of fields to exclude from updates (primary key and fields with no-update tag)
+	excludeFromUpdate := make(map[string]struct{})
 	if pkField := table.PrimaryKeyField(); pkField != nil {
-		primaryKeyName = pkField.SQL.Name
+		excludeFromUpdate[pkField.SQL.Name] = struct{}{}
+	}
+	for _, field := range table.Fields {
+		if field.SQL.NoUpdate {
+			excludeFromUpdate[field.SQL.Name] = struct{}{}
+		}
 	}
 
+	// Add update clause
+	updateParts := []string{}
 	for _, col := range columns {
-		// Skip primary key and created_at from updates
-		if col != primaryKeyName && col != "created_at" {
+		if _, ok := excludeFromUpdate[col]; !ok {
 			updateParts = append(updateParts, fmt.Sprintf("`%s` = VALUES(`%s`)", col, col))
 		}
 	}
