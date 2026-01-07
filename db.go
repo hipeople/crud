@@ -138,6 +138,21 @@ func (db *DB) ReplaceAndRead(ctx context.Context, record interface{}) error {
 	return replaceAndRead(ctx, db.Exec, db.Query, record)
 }
 
+// Upserts given record into the database using INSERT ... ON DUPLICATE KEY UPDATE.
+// This is safer than Replace as it uses a single atomic operation and is less prone to deadlocks.
+func (db *DB) Upsert(ctx context.Context, record interface{}) error {
+	return upsert(ctx, db.Exec, record)
+}
+
+func (db *DB) UpsertAndGetResult(ctx context.Context, record interface{}) (stdsql.Result, error) {
+	return upsertAndGetResult(ctx, db.Exec, record)
+}
+
+// Upserts given record and scans the upserted row back to the given row.
+func (db *DB) UpsertAndRead(ctx context.Context, record interface{}) error {
+	return upsertAndRead(ctx, db.Exec, db.Query, record)
+}
+
 // Runs given SQL query and scans the result rows into the given target interface. The target
 // interface could be both a single record or a slice of records.
 //

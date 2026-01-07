@@ -74,6 +74,11 @@ func NewOptions(input string) (*Options, error) {
 			continue
 		}
 
+		if part == "no-update" {
+			options.NoUpdate = true
+			continue
+		}
+
 		return nil, errors.New(fmt.Sprintf("Unrecognized SQL option: %s", part))
 	}
 
@@ -93,6 +98,7 @@ type Options struct {
 	IsRequired         bool
 	Ignore             bool
 	Generated          bool
+	NoUpdate           bool
 	TableName          string
 }
 

@@ -109,6 +109,79 @@ func valuesForRecord(record interface{}) (*Row, []string, []interface{}, error) 
 	return row, columns, values, nil
 }
 
+func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {
+	row, columns, values, err := valuesForRecord(record)
+	if err != nil {
+		return nil, err
+	}
+
+	table, err := NewTable(record)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build INSERT ... ON DUPLICATE KEY UPDATE query
+	query := fmt.Sprintf("INSERT INTO `%s` ", row.SQLTableName)
+
+	// Add column names
+	query += "("
+	for i, col := range columns {
+		if i > 0 {
+			query += ", "
+		}
+		query += "`" + col + "`"
+	}
+	query += ") VALUES ("
+
+	// Add placeholders
+	for i := range columns {
+		if i > 0 {
+			query += ", "
+		}
+		query += "?"
+	}
+	query += ") ON DUPLICATE KEY UPDATE "
+
+	// Build map of fields to exclude from updates (primary key and fields with no-update tag)
+	excludeFromUpdate := make(map[string]struct{})
+	if pkField := table.PrimaryKeyField(); pkField != nil {
+		excludeFromUpdate[pkField.SQL.Name] = struct{}{}
+	}
+	for _, field := range table.Fields {
+		if field.SQL.NoUpdate {
+			excludeFromUpdate[field.SQL.Name] = struct{}{}
+		}
+	}
+
+	// Add update clause
+	updateParts := []string{}
+	for _, col := range columns {
+		if _, ok := excludeFromUpdate[col]; !ok {
+			updateParts = append(updateParts, fmt.Sprintf("`%s` = VALUES(`%s`)", col, col))
+		}
+	}
+	query += fmt.Sprintf("%s", updateParts[0])
+	for i := 1; i < len(updateParts); i++ {
+		query += ", " + updateParts[i]
+	}
+
+	return exec(ctx, query, values...)
+}
+
+func upsert(ctx context.Context, exec ExecFn, record interface{}) error {
+	_, err := upsertAndGetResult(ctx, exec, record)
+	return err
+}
+
+func upsertAndRead(ctx context.Context, exec ExecFn, query QueryFn, record interface{}) error {
+	result, err := upsertAndGetResult(ctx, exec, record)
+	if err != nil {
+		return err
+	}
+
+	return readLastInsert(ctx, query, record, result)
+}
+
 func readLastInsert(ctx context.Context, query QueryFn, record interface{}, result stdsql.Result) error {
 	id, err := result.LastInsertId()
 	if err != nil {
