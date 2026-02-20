@@ -95,8 +95,8 @@ func ResolveReadParams(params []interface{}) (string, []interface{}, error) {
 // readIter is similar to ReadIter but works with interface{} for method compatibility.
 // It returns an iterator that yields interface{} values which must be type-asserted by the caller.
 // Any errors during setup or iteration are returned as the error in the first yielded value.
-func readIter(ctx context.Context, query QueryFn, result interface{}, allparams []interface{}) iter.Seq2[interface{}, error] {
-	return func(yield func(interface{}, error) bool) {
+func readIter(ctx context.Context, query QueryFn, typ any, allparams []any) iter.Seq2[any, error] {
+	return func(yield func(any, error) bool) {
 		sql, params, err := ResolveReadParams(allparams)
 		if err != nil {
 			yield(nil, err)
@@ -111,14 +111,14 @@ func readIter(ctx context.Context, query QueryFn, result interface{}, allparams 
 		defer rows.Close()
 
 		// Create scanner based on result type to determine what we're scanning to
-		scanner, err := NewScan(result)
+		scanner, err := NewScan(typ)
 		if err != nil {
 			yield(nil, err)
 			return
 		}
 
 		for rows.Next() {
-			record := meta.CreateElement(result)
+			record := meta.CreateElement(typ)
 
 			if err := scanner.Scan(rows, record); err != nil {
 				if !yield(nil, err) {
@@ -128,8 +128,8 @@ func readIter(ctx context.Context, query QueryFn, result interface{}, allparams 
 			}
 
 			// Extract the value from reflect.Value
-			var value interface{}
-			if record.Kind() == reflect.Ptr {
+			var value any
+			if record.Kind() == reflect.Pointer {
 				value = record.Elem().Interface()
 			} else {
 				value = record.Interface()
