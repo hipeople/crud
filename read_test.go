@@ -241,3 +241,228 @@ func BenchmarkRead(b *testing.B) {
 		assert.NotZero(b, user.Name)
 	}
 }
+
+func TestReadIterMultipleRows(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+	defer DB.DropTables(ctx, UserProfile{})
+
+	// Test ReadIter with DB - pass a slice element type to get the scanner
+	var users []UserProfile
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
+
+	count := 0
+	users = nil // Reset after scanner creation
+	for val, err := range iter {
+		require.NoError(t, err)
+		user := val.(UserProfile)
+		users = append(users, user)
+		count++
+	}
+
+	assert.Equal(t, 3, count)
+	assert.Equal(t, "Nova", users[0].Name)
+	assert.Equal(t, "Photographer", users[0].Bio)
+	assert.Equal(t, "nova@roadbeats.com", users[0].Email)
+	assert.Equal(t, "Azer", users[1].Name)
+	assert.Equal(t, "Engineer", users[1].Bio)
+	assert.Equal(t, "azer@roadbeats.com", users[1].Email)
+}
+
+func TestReadIterWithParams(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+	defer DB.DropTables(ctx, UserProfile{})
+
+	// Test ReadIter with query parameters
+	var users []UserProfile
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles WHERE name = ?", "Nova")
+
+	count := 0
+	for val, err := range iter {
+		require.NoError(t, err)
+		user := val.(UserProfile)
+		assert.Equal(t, "Nova", user.Name)
+		assert.Equal(t, "Photographer", user.Bio)
+		count++
+	}
+
+	assert.Equal(t, 1, count)
+}
+
+func TestReadIterEmptyResult(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+	defer DB.DropTables(ctx, UserProfile{})
+
+	// Test ReadIter with no matching rows
+	var users []UserProfile
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles WHERE name = ?", "NonExistent")
+
+	count := 0
+	for _, err := range iter {
+		require.NoError(t, err)
+		count++
+	}
+
+	assert.Equal(t, 0, count)
+}
+
+func TestReadIterWithTransaction(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+	defer DB.DropTables(ctx, UserProfile{})
+
+	// Test ReadIter with transaction
+	tx, err := DB.Begin(ctx, true)
+	require.NoError(t, err)
+	defer tx.Rollback(ctx)
+
+	var users []UserProfile
+	iter := tx.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
+
+	count := 0
+	for val, err := range iter {
+		require.NoError(t, err)
+		user := val.(UserProfile)
+		assert.NotZero(t, user.Id)
+		assert.NotEmpty(t, user.Name)
+		count++
+	}
+
+	assert.Equal(t, 3, count)
+}
+
+func TestReadIterEarlyTermination(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+	defer DB.DropTables(ctx, UserProfile{})
+
+	// Test early termination with ReadIter
+	var users []UserProfile
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
+
+	count := 0
+	for val, err := range iter {
+		require.NoError(t, err)
+		user := val.(UserProfile)
+		count++
+		if user.Name == "Azer" {
+			break // Early termination after second row
+		}
+	}
+
+	assert.Equal(t, 2, count)
+}
+
+func TestReadIterWithSimpleTypes(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+	defer DB.DropTables(ctx, UserProfile{})
+
+	// Test ReadIter with simple string type
+	var stringSlice []string
+	iter := DB.ReadIter(ctx, &stringSlice, "SELECT name FROM user_profiles ORDER BY id ASC")
+
+	var names []string
+	for val, err := range iter {
+		require.NoError(t, err)
+		name := val.(string)
+		names = append(names, name)
+	}
+
+	assert.Equal(t, 3, len(names))
+	assert.Equal(t, "Nova", names[0])
+	assert.Equal(t, "Azer", names[1])
+	assert.Equal(t, "Hola", names[2])
+
+	// Test ReadIter with int type
+	var intSlice []int
+	iter2 := DB.ReadIter(ctx, &intSlice, "SELECT id FROM user_profiles ORDER BY id ASC")
+
+	var ids []int
+	for val, err := range iter2 {
+		require.NoError(t, err)
+		id := val.(int)
+		ids = append(ids, id)
+	}
+
+	assert.Equal(t, 3, len(ids))
+	assert.Equal(t, 1, ids[0])
+	assert.Equal(t, 2, ids[1])
+	assert.Equal(t, 3, ids[2])
+}
+
+func TestReadIterInvalidQuery(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+	defer DB.DropTables(ctx, UserProfile{})
+
+	// Test ReadIter with invalid query - error should be returned on first iteration
+	var users []UserProfile
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM nonexistent_table")
+
+	for _, err := range iter {
+		assert.NotNil(t, err)
+		break // Error on first iteration
+	}
+}
+
+func BenchmarkReadIter(b *testing.B) {
+	ctx := context.Background()
+
+	require.NoError(b, CreateUserProfiles(ctx))
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		var users []UserProfile
+		iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
+
+		count := 0
+		for val, err := range iter {
+			require.NoError(b, err)
+			user := val.(UserProfile)
+			assert.NotZero(b, user.Id)
+			count++
+		}
+		assert.Equal(b, 3, count)
+	}
+}
+
+func BenchmarkReadVsReadIter(b *testing.B) {
+	ctx := context.Background()
+
+	require.NoError(b, CreateUserProfiles(ctx))
+
+	b.Run("Read", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var users []UserProfile
+			err := DB.Read(ctx, &users, "SELECT * FROM user_profiles")
+			require.NoError(b, err)
+			assert.Equal(b, 3, len(users))
+		}
+	})
+
+	b.Run("ReadIter", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var users []UserProfile
+			iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
+
+			count := 0
+			for _, err := range iter {
+				require.NoError(b, err)
+				count++
+			}
+			assert.Equal(b, 3, count)
+		}
+	})
+}

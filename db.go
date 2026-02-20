@@ -3,6 +3,7 @@ package crud
 import (
 	"context"
 	stdsql "database/sql"
+	"iter"
 	"log/slog"
 	"time"
 
@@ -165,6 +166,26 @@ func (db *DB) UpsertAndRead(ctx context.Context, record interface{}) error {
 // err := tx.Read(users, "SELECT * FROM users", 1)
 func (db *DB) Read(ctx context.Context, scanTo interface{}, params ...interface{}) error {
 	return read(ctx, db.Query, scanTo, params)
+}
+
+// ReadIter executes the given query and returns an iterator that yields each row.
+// Unlike Read, this doesn't load all rows into memory at once, making it ideal for large result sets.
+// Any errors during query execution are returned on the first iteration.
+//
+// Usage Example:
+//
+//	var users []UserProfile
+//	iter := db.ReadIter(ctx, &users, "SELECT * FROM users WHERE active = ?", true)
+//
+//	for val, err := range iter {
+//		if err != nil {
+//			return err
+//		}
+//		user := val.(UserProfile)
+//		fmt.Println(user.Name)
+//	}
+func (db *DB) ReadIter(ctx context.Context, result interface{}, params ...interface{}) iter.Seq2[interface{}, error] {
+	return readIter(ctx, db.Query, result, params)
 }
 
 // Finding out the primary-key field of the given row, updates the corresponding record on the table

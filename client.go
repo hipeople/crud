@@ -1,6 +1,10 @@
 package crud
 
-import stdsql "database/sql"
+import (
+	"iter"
+
+	stdsql "database/sql"
+)
 
 type Client interface {
 	Exec(string, ...interface{}) (stdsql.Result, error)
@@ -8,6 +12,7 @@ type Client interface {
 	Create(interface{}) error
 	CreateAndRead(interface{}) error
 	Read(interface{}, ...interface{}) error
+	ReadIter(interface{}, ...interface{}) iter.Seq2[interface{}, error]
 	Update(interface{}) error
 	Delete(interface{}) error
 }

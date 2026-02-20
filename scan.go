@@ -64,7 +64,7 @@ func (scan *Scan) Scan(rows *sql.Rows, record reflect.Value) error {
 		return scan.ScanToStruct(rows, record)
 	}
 
-	if record.Kind() != reflect.Ptr {
+	if record.Kind() != reflect.Pointer {
 		return rows.Scan(record.Addr().Interface())
 	} else {
 		return rows.Scan(record.Interface())
