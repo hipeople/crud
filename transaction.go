@@ -72,6 +72,17 @@ func (tx *Tx) ReplaceAndRead(ctx context.Context, record interface{}) error {
 	return replaceAndRead(ctx, tx.Exec, tx.Query, record)
 }
 
+// Upserts given record into the database using INSERT ... ON DUPLICATE KEY UPDATE.
+// This is safer than Replace as it uses a single atomic operation and is less prone to deadlocks.
+func (tx *Tx) Upsert(ctx context.Context, record interface{}) error {
+	return upsert(ctx, tx.Exec, record)
+}
+
+// Upserts given record and scans the upserted row back to the given row.
+func (tx *Tx) UpsertAndRead(ctx context.Context, record interface{}) error {
+	return upsertAndRead(ctx, tx.Exec, tx.Query, record)
+}
+
 // Run a select query on the databaase (w/ given parameters optionally) and scan the result(s) to the
 // target interface specified as the first parameter.
 //

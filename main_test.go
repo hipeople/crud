@@ -68,7 +68,7 @@ type Mixed struct {
 	Id        int    `json:"-" sql:"  primary-key auto-increment unsigned name=id table-name=__mixed__ "`
 	UserId    int    `json:"-" valid:"User.Id~Specified user was not found" sql:" name=user_id"`
 	Secret    string `json:"-" valid:"required" sql:" name=secret"`
-	CreatedAt int64  `json:"-" sql:"default=0 name=created_at"`
+	CreatedAt int64  `json:"-" sql:"default=0 name=created_at no-update"`
 	UpdatedAt int64  `json:"-" sql:"default=0 name=updated_at"`
 }
 
