@@ -2,7 +2,6 @@ package crud
 
 import (
 	"database/sql"
-	"iter"
 	"reflect"
 
 	"github.com/azer/crud/v2/meta"
@@ -99,68 +98,4 @@ func (scan *Scan) ScanToStruct(rows *sql.Rows, record reflect.Value) error {
 	}
 
 	return rows.Scan(values...)
-}
-
-// Yield returns an iterator that yields each row from sql.Rows as a value of type T.
-// The iterator handles row scanning automatically and ensures rows are properly closed.
-// It yields (value, error) pairs - on success error is nil, on failure value is zero.
-//
-// Example usage:
-//
-//	type User struct {
-//		ID   int    `sql:"id"`
-//		Name string `sql:"name"`
-//	}
-//
-//	rows, _ := db.Query(ctx, "SELECT id, name FROM users")
-//	for user, err := range Yield[User](rows) {
-//		if err != nil {
-//			return err
-//		}
-//		fmt.Println(user.Name)
-//	}
-func Yield[T any](rows *sql.Rows) iter.Seq2[T, error] {
-	return func(yield func(T, error) bool) {
-		defer rows.Close()
-
-		// Create a scanner for type T
-		var target []T
-		scanner, err := NewScan(&target)
-		if err != nil {
-			var zero T
-			yield(zero, err)
-			return
-		}
-
-		// Iterate through all rows
-		for rows.Next() {
-			record := meta.CreateElement(&target)
-
-			if err := scanner.Scan(rows, record); err != nil {
-				var zero T
-				if !yield(zero, err) {
-					return
-				}
-				continue
-			}
-
-			// Extract the value from reflect.Value
-			var value T
-			if record.Kind() == reflect.Ptr {
-				value = record.Elem().Interface().(T)
-			} else {
-				value = record.Interface().(T)
-			}
-
-			if !yield(value, nil) {
-				return
-			}
-		}
-
-		// Check for errors from iteration
-		if err := rows.Err(); err != nil {
-			var zero T
-			yield(zero, err)
-		}
-	}
 }

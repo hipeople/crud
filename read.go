@@ -92,57 +92,6 @@ func ResolveReadParams(params []interface{}) (string, []interface{}, error) {
 	return query, params[1:], nil
 }
 
-// ReadIter executes the given query and returns an iterator that yields each row as type T.
-// The iterator automatically handles scanning and ensures proper resource cleanup.
-// Unlike read/readAll, this doesn't load all rows into memory at once, making it ideal for large result sets.
-//
-// Usage Example with DB:
-//
-//	type User struct {
-//		ID   int    `sql:"id"`
-//		Name string `sql:"name"`
-//	}
-//
-//	iter, err := crud.ReadIter[User](ctx, db.Query, "SELECT * FROM users WHERE active = ?", true)
-//	if err != nil {
-//		return err
-//	}
-//
-//	for user, err := range iter {
-//		if err != nil {
-//			return err
-//		}
-//		fmt.Println(user.Name)
-//	}
-//
-// Usage Example with Transaction:
-//
-//	tx, _ := db.Begin(ctx, false)
-//	iter, err := crud.ReadIter[User](ctx, tx.Query, "SELECT * FROM users")
-//	if err != nil {
-//		return err
-//	}
-//
-//	for user, err := range iter {
-//		if err != nil {
-//			return err
-//		}
-//		fmt.Println(user.Name)
-//	}
-func ReadIter[T any](ctx context.Context, query QueryFn, params ...interface{}) (iter.Seq2[T, error], error) {
-	sql, queryParams, err := ResolveReadParams(params)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := query(ctx, sql, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-
-	return Yield[T](rows), nil
-}
-
 // readIter is similar to ReadIter but works with interface{} for method compatibility.
 // It returns an iterator that yields interface{} values which must be type-asserted by the caller.
 // Any errors during setup or iteration are returned as the error in the first yielded value.
