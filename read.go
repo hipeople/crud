@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
+	"reflect"
 
 	"github.com/azer/crud/v2/meta"
 )
@@ -80,7 +82,7 @@ func ResolveReadParams(params []interface{}) (string, []interface{}, error) {
 	)
 
 	if query, ok = params[0].(string); !ok {
-		return "", nil, errors.New(fmt.Sprintf("Invalid query: %v", params[0]))
+		return "", nil, fmt.Errorf("Invalid query: %v", params[0])
 	}
 
 	if len(params) == 1 {
@@ -88,4 +90,108 @@ func ResolveReadParams(params []interface{}) (string, []interface{}, error) {
 	}
 
 	return query, params[1:], nil
+}
+
+// ReadIter executes the given query and returns an iterator that yields each row as type T.
+// The iterator automatically handles scanning and ensures proper resource cleanup.
+// Unlike read/readAll, this doesn't load all rows into memory at once, making it ideal for large result sets.
+//
+// Usage Example with DB:
+//
+//	type User struct {
+//		ID   int    `sql:"id"`
+//		Name string `sql:"name"`
+//	}
+//
+//	iter, err := crud.ReadIter[User](ctx, db.Query, "SELECT * FROM users WHERE active = ?", true)
+//	if err != nil {
+//		return err
+//	}
+//
+//	for user, err := range iter {
+//		if err != nil {
+//			return err
+//		}
+//		fmt.Println(user.Name)
+//	}
+//
+// Usage Example with Transaction:
+//
+//	tx, _ := db.Begin(ctx, false)
+//	iter, err := crud.ReadIter[User](ctx, tx.Query, "SELECT * FROM users")
+//	if err != nil {
+//		return err
+//	}
+//
+//	for user, err := range iter {
+//		if err != nil {
+//			return err
+//		}
+//		fmt.Println(user.Name)
+//	}
+func ReadIter[T any](ctx context.Context, query QueryFn, params ...interface{}) (iter.Seq2[T, error], error) {
+	sql, queryParams, err := ResolveReadParams(params)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := query(ctx, sql, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+
+	return Yield[T](rows), nil
+}
+
+// readIter is similar to ReadIter but works with interface{} for method compatibility.
+// It returns an iterator that yields interface{} values which must be type-asserted by the caller.
+func readIter(ctx context.Context, query QueryFn, result interface{}, allparams []interface{}) (iter.Seq2[interface{}, error], error) {
+	sql, params, err := ResolveReadParams(allparams)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := query(ctx, sql, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create scanner based on result type to determine what we're scanning to
+	scanner, err := NewScan(result)
+	if err != nil {
+		rows.Close()
+		return nil, err
+	}
+
+	return func(yield func(interface{}, error) bool) {
+		defer rows.Close()
+
+		for rows.Next() {
+			record := meta.CreateElement(result)
+
+			if err := scanner.Scan(rows, record); err != nil {
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+
+			// Extract the value from reflect.Value
+			var value interface{}
+			if record.Kind() == reflect.Ptr {
+				value = record.Elem().Interface()
+			} else {
+				value = record.Interface()
+			}
+
+			if !yield(value, nil) {
+				return
+			}
+		}
+
+		// Check for errors from iteration
+		if err := rows.Err(); err != nil {
+			yield(nil, err)
+		}
+	}, nil
 }

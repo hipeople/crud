@@ -4,6 +4,7 @@ import (
 	"context"
 	stdsql "database/sql"
 	"fmt"
+	"iter"
 	"log/slog"
 	"time"
 )
@@ -83,6 +84,28 @@ func (tx *Tx) ReplaceAndRead(ctx context.Context, record interface{}) error {
 // err := tx.Read(users, "SELECT * FROM users", 1)
 func (tx *Tx) Read(ctx context.Context, scanTo interface{}, params ...interface{}) error {
 	return read(ctx, tx.Query, scanTo, params)
+}
+
+// ReadIter executes the given query and returns an iterator that yields each row.
+// Unlike Read, this doesn't load all rows into memory at once, making it ideal for large result sets.
+//
+// Usage Example:
+//
+//	var users []UserProfile
+//	iter, err := tx.ReadIter(ctx, &users, "SELECT * FROM users WHERE active = ?", true)
+//	if err != nil {
+//		return err
+//	}
+//
+//	for val, err := range iter {
+//		if err != nil {
+//			return err
+//		}
+//		user := val.(UserProfile)
+//		fmt.Println(user.Name)
+//	}
+func (tx *Tx) ReadIter(ctx context.Context, result interface{}, params ...interface{}) (iter.Seq2[interface{}, error], error) {
+	return readIter(ctx, tx.Query, result, params)
 }
 
 // Run an update query on the transaction, finding out the primary-key field of the given row.
