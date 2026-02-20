@@ -155,14 +155,12 @@ func (db *DB) Read(ctx context.Context, scanTo interface{}, params ...interface{
 
 // ReadIter executes the given query and returns an iterator that yields each row.
 // Unlike Read, this doesn't load all rows into memory at once, making it ideal for large result sets.
+// Any errors during query execution are returned on the first iteration.
 //
 // Usage Example:
 //
 //	var users []UserProfile
-//	iter, err := db.ReadIter(ctx, &users, "SELECT * FROM users WHERE active = ?", true)
-//	if err != nil {
-//		return err
-//	}
+//	iter := db.ReadIter(ctx, &users, "SELECT * FROM users WHERE active = ?", true)
 //
 //	for val, err := range iter {
 //		if err != nil {
@@ -171,7 +169,7 @@ func (db *DB) Read(ctx context.Context, scanTo interface{}, params ...interface{
 //		user := val.(UserProfile)
 //		fmt.Println(user.Name)
 //	}
-func (db *DB) ReadIter(ctx context.Context, result interface{}, params ...interface{}) (iter.Seq2[interface{}, error], error) {
+func (db *DB) ReadIter(ctx context.Context, result interface{}, params ...interface{}) iter.Seq2[interface{}, error] {
 	return readIter(ctx, db.Query, result, params)
 }
 

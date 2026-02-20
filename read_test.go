@@ -360,8 +360,7 @@ func TestReadIterMultipleRows(t *testing.T) {
 
 	// Test ReadIter with DB - pass a slice element type to get the scanner
 	var users []UserProfile
-	iter, err := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
-	require.NoError(t, err)
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
 
 	count := 0
 	users = nil // Reset after scanner creation
@@ -389,8 +388,7 @@ func TestReadIterWithParams(t *testing.T) {
 
 	// Test ReadIter with query parameters
 	var users []UserProfile
-	iter, err := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles WHERE name = ?", "Nova")
-	require.NoError(t, err)
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles WHERE name = ?", "Nova")
 
 	count := 0
 	for val, err := range iter {
@@ -412,8 +410,7 @@ func TestReadIterEmptyResult(t *testing.T) {
 
 	// Test ReadIter with no matching rows
 	var users []UserProfile
-	iter, err := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles WHERE name = ?", "NonExistent")
-	require.NoError(t, err)
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles WHERE name = ?", "NonExistent")
 
 	count := 0
 	for _, err := range iter {
@@ -436,8 +433,7 @@ func TestReadIterWithTransaction(t *testing.T) {
 	defer tx.Rollback(ctx)
 
 	var users []UserProfile
-	iter, err := tx.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
-	require.NoError(t, err)
+	iter := tx.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
 
 	count := 0
 	for val, err := range iter {
@@ -459,8 +455,7 @@ func TestReadIterEarlyTermination(t *testing.T) {
 
 	// Test early termination with ReadIter
 	var users []UserProfile
-	iter, err := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
-	require.NoError(t, err)
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles ORDER BY id ASC")
 
 	count := 0
 	for val, err := range iter {
@@ -483,8 +478,7 @@ func TestReadIterWithSimpleTypes(t *testing.T) {
 
 	// Test ReadIter with simple string type
 	var stringSlice []string
-	iter, err := DB.ReadIter(ctx, &stringSlice, "SELECT name FROM user_profiles ORDER BY id ASC")
-	require.NoError(t, err)
+	iter := DB.ReadIter(ctx, &stringSlice, "SELECT name FROM user_profiles ORDER BY id ASC")
 
 	var names []string
 	for val, err := range iter {
@@ -500,8 +494,7 @@ func TestReadIterWithSimpleTypes(t *testing.T) {
 
 	// Test ReadIter with int type
 	var intSlice []int
-	iter2, err := DB.ReadIter(ctx, &intSlice, "SELECT id FROM user_profiles ORDER BY id ASC")
-	require.NoError(t, err)
+	iter2 := DB.ReadIter(ctx, &intSlice, "SELECT id FROM user_profiles ORDER BY id ASC")
 
 	var ids []int
 	for val, err := range iter2 {
@@ -522,10 +515,14 @@ func TestReadIterInvalidQuery(t *testing.T) {
 	assert.Nil(t, CreateUserProfiles(ctx))
 	defer DB.DropTables(ctx, UserProfile{})
 
-	// Test ReadIter with invalid query
+	// Test ReadIter with invalid query - error should be returned on first iteration
 	var users []UserProfile
-	_, err := DB.ReadIter(ctx, &users, "SELECT * FROM nonexistent_table")
-	assert.NotNil(t, err)
+	iter := DB.ReadIter(ctx, &users, "SELECT * FROM nonexistent_table")
+
+	for _, err := range iter {
+		assert.NotNil(t, err)
+		break // Error on first iteration
+	}
 }
 
 func BenchmarkReadIter(b *testing.B) {
@@ -536,8 +533,7 @@ func BenchmarkReadIter(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var users []UserProfile
-		iter, err := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
-		require.NoError(b, err)
+		iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
 
 		count := 0
 		for val, err := range iter {
@@ -569,8 +565,7 @@ func BenchmarkReadVsReadIter(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var users []UserProfile
-			iter, err := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
-			require.NoError(b, err)
+			iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
 
 			count := 0
 			for _, err := range iter {

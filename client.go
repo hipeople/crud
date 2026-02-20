@@ -12,7 +12,7 @@ type Client interface {
 	Create(interface{}) error
 	CreateAndRead(interface{}) error
 	Read(interface{}, ...interface{}) error
-	ReadIter(interface{}, ...interface{}) (iter.Seq2[interface{}, error], error)
+	ReadIter(interface{}, ...interface{}) iter.Seq2[interface{}, error]
 	Update(interface{}) error
 	Delete(interface{}) error
 }

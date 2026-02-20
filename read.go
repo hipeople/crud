@@ -145,26 +145,28 @@ func ReadIter[T any](ctx context.Context, query QueryFn, params ...interface{}) 
 
 // readIter is similar to ReadIter but works with interface{} for method compatibility.
 // It returns an iterator that yields interface{} values which must be type-asserted by the caller.
-func readIter(ctx context.Context, query QueryFn, result interface{}, allparams []interface{}) (iter.Seq2[interface{}, error], error) {
-	sql, params, err := ResolveReadParams(allparams)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := query(ctx, sql, params...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create scanner based on result type to determine what we're scanning to
-	scanner, err := NewScan(result)
-	if err != nil {
-		rows.Close()
-		return nil, err
-	}
-
+// Any errors during setup or iteration are returned as the error in the first yielded value.
+func readIter(ctx context.Context, query QueryFn, result interface{}, allparams []interface{}) iter.Seq2[interface{}, error] {
 	return func(yield func(interface{}, error) bool) {
+		sql, params, err := ResolveReadParams(allparams)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+
+		rows, err := query(ctx, sql, params...)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
 		defer rows.Close()
+
+		// Create scanner based on result type to determine what we're scanning to
+		scanner, err := NewScan(result)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
 
 		for rows.Next() {
 			record := meta.CreateElement(result)
@@ -193,5 +195,5 @@ func readIter(ctx context.Context, query QueryFn, result interface{}, allparams 
 		if err := rows.Err(); err != nil {
 			yield(nil, err)
 		}
-	}, nil
+	}
 }
