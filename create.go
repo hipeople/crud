@@ -153,8 +153,12 @@ func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 		}
 	}
 
-	// Add update clause
-	updateParts := []string{}
+	// MySQL returns 0 affected rows and doesn't update LastInsertId when all column values match the existing row exactly.
+	// Touch the pk column to force a change so LastInsertId is the affected row's ID, and readLastInsert can re-read.
+	var updateParts []string
+	if pk := table.PrimaryKeyField(); pk != nil {
+		updateParts = append(updateParts, fmt.Sprintf("`%s` = LAST_INSERT_ID(`%s`)", pk.SQL.Name, pk.SQL.Name))
+	}
 	for _, col := range columns {
 		if _, ok := excludeFromUpdate[col]; !ok {
 			updateParts = append(updateParts, fmt.Sprintf("`%s` = VALUES(`%s`)", col, col))
