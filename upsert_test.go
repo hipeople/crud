@@ -222,3 +222,25 @@ func TestUpsertTransaction(t *testing.T) {
 
 	DB.DropTables(ctx, UserProfile{})
 }
+
+// MySQL returns 0 affected rows and doesn't update LastInsertId when all column values match the existing row exactly.
+// Touch the pk column to force a change so LastInsertId is the affected row's ID, and readLastInsert can re-read.
+func TestUpsertAndReadNoOpUpdate(t *testing.T) {
+	ctx := context.Background()
+
+	DB.ResetTables(ctx, UserProfile{})
+
+	// upsert inserts
+	first := UserProfile{Name: "Azer", Bio: "bio", Email: "azer@test.com"}
+	err := DB.UpsertAndRead(ctx, &first)
+	assert.Nil(t, err)
+	assert.NotEqual(t, 0, first.Id)
+
+	// second upsert with same values triggers MySQL no-op
+	same := UserProfile{Name: "Azer", Bio: "bio", Email: "azer@test.com"}
+	err = DB.UpsertAndRead(ctx, &same)
+	assert.Nil(t, err, "UpsertAndRead should not fail when the upsert is a no-op")
+	assert.Equal(t, first.Id, same.Id, "should read back the existing row's id")
+
+	DB.DropTables(ctx, UserProfile{})
+}
