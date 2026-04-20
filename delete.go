@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/azer/crud/v2/meta"
-	"github.com/azer/crud/v2/sql"
+	"github.com/hipeople/crud/v2/meta"
+	"github.com/hipeople/crud/v2/sql"
 )
 
 func deleteRow(ctx context.Context, exec ExecFn, record any) (stdsql.Result, error) {

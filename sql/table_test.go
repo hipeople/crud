@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/azer/crud/v2/sql"
+	"github.com/hipeople/crud/v2/sql"
 	"github.com/stretchr/testify/assert"
 )
 

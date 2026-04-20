@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/azer/crud/v2/sql"
+	"github.com/hipeople/crud/v2/sql"
 )
 
 type ExecFn func(context.Context, string, ...interface{}) (stdsql.Result, error)

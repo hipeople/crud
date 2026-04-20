@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/azer/crud/v2/meta"
-	"github.com/azer/crud/v2/sql"
 	"github.com/azer/snakecase"
+	"github.com/hipeople/crud/v2/meta"
+	"github.com/hipeople/crud/v2/sql"
 )
 
 // Take any kind of struct and return a FieldIteration instance

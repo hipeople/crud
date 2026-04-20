@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/azer/crud/v2"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/hipeople/crud/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go/modules/mariadb"
 )

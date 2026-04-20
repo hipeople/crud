@@ -1,7 +1,7 @@
 package crud
 
 import (
-	"github.com/azer/crud/v2/sql"
+	"github.com/hipeople/crud/v2/sql"
 )
 
 type Field struct {

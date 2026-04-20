@@ -7,7 +7,7 @@ import (
 	"iter"
 	"reflect"
 
-	"github.com/azer/crud/v2/meta"
+	"github.com/hipeople/crud/v2/meta"
 )
 
 func read(ctx context.Context, query QueryFn, scanTo interface{}, allparams []interface{}) error {
