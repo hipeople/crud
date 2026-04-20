@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/azer/crud/v2/sql"
+	"github.com/hipeople/crud/v2/sql"
 )
 
 func update(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {

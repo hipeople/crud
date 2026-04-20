@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/azer/crud/v2/meta"
-	"github.com/azer/crud/v2/sql"
+	"github.com/hipeople/crud/v2/meta"
+	"github.com/hipeople/crud/v2/sql"
 )
 
 var (

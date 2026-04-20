@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/azer/crud/v2"
+	"github.com/hipeople/crud/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

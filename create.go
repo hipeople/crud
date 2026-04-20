@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/azer/crud/v2/sql"
+	"github.com/hipeople/crud/v2/sql"
 )
 
 func createAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {

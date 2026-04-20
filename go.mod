@@ -1,4 +1,4 @@
-module github.com/azer/crud/v2
+module github.com/hipeople/crud/v2
 
 require (
 	github.com/azer/snakecase v1.0.0

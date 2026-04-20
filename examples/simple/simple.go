@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/azer/crud/v2"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/hipeople/crud/v2"
 )
 
 type User struct {
