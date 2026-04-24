@@ -3,7 +3,6 @@ package crud
 import (
 	"context"
 	stdsql "database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/hipeople/crud/v2/sql"
