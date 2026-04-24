@@ -53,5 +53,5 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}*/
 
-	w.Write([]byte(fmt.Sprintf("%d / %s / %s", row.Id, row.FirstName, row.LastName)))
+	fmt.Fprintf(w, "%d / %s / %s", row.Id, row.FirstName, row.LastName)
 }

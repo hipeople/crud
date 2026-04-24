@@ -53,5 +53,5 @@ func MatchType(typeName string) (string, error) {
 		return result, nil
 	}
 
-	return "", errors.New(fmt.Sprintf("[crud] Can't match Go type '%s' with any SQL type.", typeName))
+	return "", fmt.Errorf("[crud] Can't match Go type '%s' with any SQL type.", typeName)
 }

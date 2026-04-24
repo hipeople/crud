@@ -84,7 +84,7 @@ func TestReadingSingleRow(t *testing.T) {
 	assert.Equal(t, nova.Bio, "Photographer")
 	assert.Equal(t, nova.Email, "nova@roadbeats.com")
 
-	var azer *UserProfile = &UserProfile{}
+	var azer = &UserProfile{}
 	err = DB.Read(ctx, azer, "SELECT * FROM user_profiles WHERE name = ?", "Azer")
 	assert.Nil(t, err)
 	assert.Equal(t, azer.Id, 2)
