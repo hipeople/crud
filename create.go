@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	InvalidOperationErrNumber = 1062
+	DuplicateEntryErrorNumber = 1062
 )
 
-var ErrInvalidOperation = errors.New("failed to run query, operation is not valid")
+var ErrDuplicateEntry = errors.New("duplicated entry.")
 
 func createAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {
 	row, columns, values, err := valuesForRecord(record)
@@ -50,8 +50,8 @@ func createAndRead(ctx context.Context, exec ExecFn, query QueryFn, record inter
 func checkMysqlError(err error) error {
 	if err != nil {
 		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
-			if mysqlErr.Number == InvalidOperationErrNumber {
-				return ErrInvalidOperation
+			if mysqlErr.Number == DuplicateEntryErrorNumber {
+				return ErrDuplicateEntry
 			}
 		}
 	}
