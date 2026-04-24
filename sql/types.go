@@ -1,7 +1,6 @@
 package sql
 
 import (
-	"errors"
 	"fmt"
 )
 
