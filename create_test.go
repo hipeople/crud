@@ -2,9 +2,11 @@ package crud_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/hipeople/crud/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,6 +82,33 @@ func TestCreatingRenamedTableRow(t *testing.T) {
 	assert.Equal(t, p.Id, 1)
 
 	DB.DropTables(ctx, Post{})
+}
+
+func TestCreateDuplicateEntry(t *testing.T) {
+	ctx := context.Background()
+
+	err := DB.ResetTables(ctx, UserProfile{})
+	assert.Nil(t, err)
+
+	azer := UserProfile{
+		Name:  "Azer",
+		Bio:   "I like photography",
+		Email: "azer@roadbeats.com",
+	}
+
+	err = DB.Create(ctx, azer)
+	assert.Nil(t, err)
+
+	duplicate := UserProfile{
+		Name:  "Azer Clone",
+		Bio:   "Same email, different person",
+		Email: "azer@roadbeats.com",
+	}
+
+	err = DB.Create(ctx, duplicate)
+	assert.True(t, errors.Is(err, crud.ErrDuplicateEntry))
+
+	DB.DropTables(ctx, UserProfile{})
 }
 
 func TestCreateBulk(t *testing.T) {

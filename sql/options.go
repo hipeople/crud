@@ -1,7 +1,6 @@
 package sql
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -79,7 +78,7 @@ func NewOptions(input string) (*Options, error) {
 			continue
 		}
 
-		return nil, errors.New(fmt.Sprintf("Unrecognized SQL option: %s", part))
+		return nil, fmt.Errorf("Unrecognized SQL option: %s", part)
 	}
 
 	return options, nil

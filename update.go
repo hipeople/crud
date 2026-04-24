@@ -3,7 +3,6 @@ package crud
 import (
 	"context"
 	stdsql "database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/hipeople/crud/v2/sql"
@@ -17,7 +16,7 @@ func update(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result
 
 	pk := table.PrimaryKeyField()
 	if pk == nil {
-		return nil, errors.New(fmt.Sprintf("Table '%s' (%s) doesn't have a primary-key field", table.Name, table.SQLName))
+		return nil, fmt.Errorf("Table '%s' (%s) doesn't have a primary-key field", table.Name, table.SQLName)
 	}
 
 	return exec(ctx, sql.UpdateQuery(table.SQLName, pk.SQL.Name, table.SQLUpdateColumnSet()), table.SQLUpdateValueSet(record)...)

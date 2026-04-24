@@ -9,8 +9,15 @@ import (
 	"reflect"
 	"slices"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/hipeople/crud/v2/sql"
 )
+
+const (
+	DuplicateEntryErrorNumber = 1062
+)
+
+var ErrDuplicateEntry = errors.New("duplicated entry.")
 
 func createAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {
 	row, columns, values, err := valuesForRecord(record)
@@ -18,12 +25,13 @@ func createAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 		return nil, err
 	}
 
-	return exec(ctx, sql.InsertQuery(row.SQLTableName, columns), values...)
+	res, err := exec(ctx, sql.InsertQuery(row.SQLTableName, columns), values...)
+	return res, checkMysqlError(err)
 }
 
 func create(ctx context.Context, exec ExecFn, record interface{}) error {
 	_, err := createAndGetResult(ctx, exec, record)
-	return err
+	return checkMysqlError(err)
 }
 
 func createAndRead(ctx context.Context, exec ExecFn, query QueryFn, record interface{}) error {
@@ -32,7 +40,23 @@ func createAndRead(ctx context.Context, exec ExecFn, query QueryFn, record inter
 		return err
 	}
 
+	if err := checkMysqlError(err); err != nil {
+		return err
+	}
+
 	return readLastInsert(ctx, query, record, result)
+}
+
+func checkMysqlError(err error) error {
+	if err != nil {
+		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
+			if mysqlErr.Number == DuplicateEntryErrorNumber {
+				return ErrDuplicateEntry
+			}
+		}
+	}
+
+	return err
 }
 
 func bulkCreate(ctx context.Context, exec ExecFn, value any) error {
@@ -164,7 +188,7 @@ func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 			updateParts = append(updateParts, fmt.Sprintf("`%s` = VALUES(`%s`)", col, col))
 		}
 	}
-	query += fmt.Sprintf("%s", updateParts[0])
+	query += updateParts[0]
 	for i := 1; i < len(updateParts); i++ {
 		query += ", " + updateParts[i]
 	}
