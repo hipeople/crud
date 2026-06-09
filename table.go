@@ -43,6 +43,7 @@ func NewTable(any interface{}) (*Table, error) {
 		SQLName: sqlName,
 		Fields:  fields,
 	}
+	t.sqlColumnDict = buildSQLColumnDict(fields)
 
 	tableCacheMu.Lock()
 	tableCache[anyT] = t
@@ -55,6 +56,10 @@ type Table struct {
 	Name    string
 	SQLName string
 	Fields  []*Field
+
+	// sqlColumnDict maps SQL column name -> struct field name. Built once in
+	// NewTable (the Table is cached by reflect.Type), so reads are free.
+	sqlColumnDict map[string]string
 }
 
 func (table *Table) SQLOptions() []*sql.Options {
@@ -68,9 +73,13 @@ func (table *Table) SQLOptions() []*sql.Options {
 }
 
 func (table *Table) SQLColumnDict() map[string]string {
-	result := map[string]string{}
+	return table.sqlColumnDict
+}
 
-	for _, field := range table.Fields {
+func buildSQLColumnDict(fields []*Field) map[string]string {
+	result := make(map[string]string, len(fields))
+
+	for _, field := range fields {
 		result[field.SQL.Name] = field.Name
 	}
 
