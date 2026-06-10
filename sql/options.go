@@ -4,11 +4,36 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 )
 
+// optionsCache memoizes the parsed result of a `sql:"..."` tag, keyed by the
+// raw tag string (which fully determines the parse). Tag strings are identical
+// across every instance of a struct type, so this collapses the repeated
+// strings.Split/FieldsFunc parsing in the write path to once per distinct tag.
+// Stored by value; NewOptions returns a fresh copy so callers can safely mutate
+// the result (e.g. defaulting Name/Type, SetDefaultPK) without touching the cache.
+var optionsCache sync.Map // string -> Options
+
 func NewOptions(input string) (*Options, error) {
-	options := &Options{}
 	input = strings.TrimSpace(input)
+
+	if cached, ok := optionsCache.Load(input); ok {
+		parsed := cached.(Options)
+		return &parsed, nil
+	}
+
+	options, err := parseOptions(input)
+	if err != nil {
+		return nil, err
+	}
+
+	optionsCache.Store(input, *options)
+	return options, nil
+}
+
+func parseOptions(input string) (*Options, error) {
+	options := &Options{}
 
 	if input == "" {
 		return options, nil

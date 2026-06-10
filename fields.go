@@ -6,7 +6,10 @@ import (
 
 type Field struct {
 	Name string
-	SQL  *sql.Options
+	// Index is the field's position in the struct, for O(1) value reads via
+	// reflect.Value.Field(Index) instead of a linear FieldByName lookup.
+	Index int
+	SQL   *sql.Options
 }
 
 // Get DB fields of any valid struct given
@@ -32,8 +35,9 @@ func CollectFields(st interface{}, fields []*Field) ([]*Field, error) {
 		}
 
 		fields = append(fields, &Field{
-			Name: iter.Name(),
-			SQL:  sqlOptions,
+			Name:  iter.Name(),
+			Index: iter.Index,
+			SQL:   sqlOptions,
 		})
 	}
 

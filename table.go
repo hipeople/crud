@@ -43,6 +43,8 @@ func NewTable(any interface{}) (*Table, error) {
 		SQLName: sqlName,
 		Fields:  fields,
 	}
+	t.sqlColumnDict = buildSQLColumnDict(fields)
+	t.columnIndex = buildColumnIndex(fields)
 
 	tableCacheMu.Lock()
 	tableCache[anyT] = t
@@ -55,6 +57,15 @@ type Table struct {
 	Name    string
 	SQLName string
 	Fields  []*Field
+
+	// sqlColumnDict maps SQL column name -> struct field name. Built once in
+	// NewTable (the Table is cached by reflect.Type), so reads are free.
+	sqlColumnDict map[string]string
+
+	// columnIndex maps SQL column name -> struct field position, so the scan
+	// path resolves columns to fields with a map lookup instead of a linear
+	// FieldByName search per column.
+	columnIndex map[string]int
 }
 
 func (table *Table) SQLOptions() []*sql.Options {
@@ -68,10 +79,24 @@ func (table *Table) SQLOptions() []*sql.Options {
 }
 
 func (table *Table) SQLColumnDict() map[string]string {
-	result := map[string]string{}
+	return table.sqlColumnDict
+}
 
-	for _, field := range table.Fields {
+func buildSQLColumnDict(fields []*Field) map[string]string {
+	result := make(map[string]string, len(fields))
+
+	for _, field := range fields {
 		result[field.SQL.Name] = field.Name
+	}
+
+	return result
+}
+
+func buildColumnIndex(fields []*Field) map[string]int {
+	result := make(map[string]int, len(fields))
+
+	for _, field := range fields {
+		result[field.SQL.Name] = field.Index
 	}
 
 	return result
@@ -102,6 +127,7 @@ func (table *Table) SQLUpdateColumnSet() []string {
 }
 
 func (table *Table) SQLUpdateValueSet(record interface{}) []interface{} {
+	rv := meta.ValueOf(record)
 	values := []interface{}{}
 
 	for _, f := range table.Fields {
@@ -109,12 +135,12 @@ func (table *Table) SQLUpdateValueSet(record interface{}) []interface{} {
 			continue
 		}
 
-		values = append(values, meta.StructFieldValue(record, f.Name))
+		values = append(values, rv.Field(f.Index).Interface())
 	}
 
 	pk := table.PrimaryKeyField()
 	if pk != nil {
-		values = append(values, meta.StructFieldValue(record, pk.Name))
+		values = append(values, rv.Field(pk.Index).Interface())
 	}
 
 	return values
