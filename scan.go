@@ -23,6 +23,7 @@ func NewScan(to interface{}) (*Scan, error) {
 		}
 
 		scan.SQLColumnDict = table.SQLColumnDict()
+		scan.columnIndex = table.columnIndex
 	}
 
 	return scan, nil
@@ -34,16 +35,21 @@ type Scan struct {
 	ToStructs     bool
 	SQLColumnDict map[string]string
 
+	// columnIndex maps SQL column name -> struct field position (from the
+	// type-cached Table), so plan building is map lookups, not FieldByName.
+	columnIndex map[string]int
+
 	// plan maps each result column (by position) to the destination struct
-	// field index path, computed once from the first row's columns and reused
-	// for every subsequent row. A nil index means the column has no matching
-	// field and is scanned into a throwaway. values is the reused scan buffer.
+	// field, computed once from the first row's columns and reused for every
+	// subsequent row. valid=false means the column has no matching field and is
+	// scanned into a throwaway. values is the reused scan buffer.
 	plan   []columnPlan
 	values []interface{}
 }
 
 type columnPlan struct {
-	index []int // reflect field index path; nil = no matching struct field
+	index int
+	valid bool
 }
 
 func (scan *Scan) All(rows *sql.Rows) error {
@@ -95,20 +101,20 @@ func (scan *Scan) ScanToStruct(rows *sql.Rows, record reflect.Value) error {
 	}
 
 	for i, p := range scan.plan {
-		if p.index == nil {
+		if !p.valid {
 			scan.values[i] = &scan.values[i]
 			continue
 		}
 
-		scan.values[i] = target.FieldByIndex(p.index).Addr().Interface()
+		scan.values[i] = target.Field(p.index).Addr().Interface()
 	}
 
 	return rows.Scan(scan.values...)
 }
 
-// buildPlan resolves each column to a struct field index once, replacing the
-// per-row, per-column FieldByName linear search with a precomputed lookup.
-func (scan *Scan) buildPlan(rows *sql.Rows, structType reflect.Type) error {
+// buildPlan resolves each column to a struct field index once, using the
+// type-cached columnIndex map instead of a per-column FieldByName search.
+func (scan *Scan) buildPlan(rows *sql.Rows, _ reflect.Type) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return err
@@ -116,8 +122,8 @@ func (scan *Scan) buildPlan(rows *sql.Rows, structType reflect.Type) error {
 
 	plan := make([]columnPlan, len(columns))
 	for i, column := range columns {
-		if field, ok := structType.FieldByName(scan.SQLColumnDict[column]); ok {
-			plan[i] = columnPlan{index: field.Index}
+		if index, ok := scan.columnIndex[column]; ok {
+			plan[i] = columnPlan{index: index, valid: true}
 		}
 	}
 
