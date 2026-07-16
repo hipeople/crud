@@ -25,9 +25,8 @@ func BenchmarkValidateExists_Get(b *testing.B) {
 	require.NoError(b, seedBenchCandidates(ctx, 1000))
 
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		var result BenchCandidate
 		if err := DB.Read(ctx, &result, "SELECT * FROM bench_candidates WHERE id = ?", 1); err != nil {
 			b.Fatal(err)
@@ -45,9 +44,8 @@ func BenchmarkValidateExists_Count(b *testing.B) {
 	require.NoError(b, seedBenchCandidates(ctx, 1000))
 
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		var count int
 		if err := DB.Read(ctx, &count, "SELECT COUNT(id) FROM bench_candidates WHERE id = ?", 1); err != nil {
 			b.Fatal(err)

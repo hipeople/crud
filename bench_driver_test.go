@@ -29,8 +29,7 @@ func BenchmarkProjection(b *testing.B) {
 	// Baseline: full SELECT * into the wide 45-field entity.
 	b.Run("full_47col_into_wide", func(b *testing.B) {
 		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
+		for b.Loop() {
 			var res []*BenchCandidate
 			if err := DB.Read(ctx, &res, "SELECT * FROM bench_candidates LIMIT 100"); err != nil {
 				b.Fatal(err)
@@ -42,8 +41,7 @@ func BenchmarkProjection(b *testing.B) {
 	// per-column allocations, but the 45-field struct is still allocated per row.
 	b.Run("project_6col_into_wide", func(b *testing.B) {
 		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
+		for b.Loop() {
 			var res []*BenchCandidate
 			if err := DB.Read(ctx, &res, "SELECT "+sixColumns+" FROM bench_candidates LIMIT 100"); err != nil {
 				b.Fatal(err)
@@ -55,8 +53,7 @@ func BenchmarkProjection(b *testing.B) {
 	// allocation — the full win.
 	b.Run("project_6col_into_narrow", func(b *testing.B) {
 		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
+		for b.Loop() {
 			var res []*BenchCandidateListItem
 			if err := DB.Read(ctx, &res, "SELECT "+sixColumns+" FROM bench_candidates LIMIT 100"); err != nil {
 				b.Fatal(err)
@@ -77,8 +74,7 @@ func BenchmarkDriver(b *testing.B) {
 	// per column per row + database/sql string->type conversion).
 	b.Run("text_protocol_wide", func(b *testing.B) {
 		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
+		for b.Loop() {
 			var res []*BenchCandidate
 			if err := DB.Read(ctx, &res, "SELECT * FROM bench_candidates LIMIT 100"); err != nil {
 				b.Fatal(err)
@@ -90,8 +86,7 @@ func BenchmarkDriver(b *testing.B) {
 	// and binaryRows (numerics parsed directly from bytes, no strconv).
 	b.Run("binary_protocol_wide", func(b *testing.B) {
 		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
+		for b.Loop() {
 			var res []*BenchCandidate
 			if err := DB.Read(ctx, &res,
 				"SELECT * FROM bench_candidates WHERE id < ? LIMIT 100", 100000000); err != nil {
@@ -103,8 +98,7 @@ func BenchmarkDriver(b *testing.B) {
 	// Narrow column set: same rows, only 5 of 45 columns selected.
 	b.Run("text_protocol_narrow", func(b *testing.B) {
 		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
+		for b.Loop() {
 			var res []*BenchCandidate
 			if err := DB.Read(ctx, &res,
 				"SELECT id, field01, int_field1, big1, bool1 FROM bench_candidates LIMIT 100"); err != nil {
@@ -115,8 +109,7 @@ func BenchmarkDriver(b *testing.B) {
 
 	b.Run("binary_protocol_narrow", func(b *testing.B) {
 		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
+		for b.Loop() {
 			var res []*BenchCandidate
 			if err := DB.Read(ctx, &res,
 				"SELECT id, field01, int_field1, big1, bool1 FROM bench_candidates WHERE id < ? LIMIT 100", 100000000); err != nil {

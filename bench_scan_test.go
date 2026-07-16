@@ -98,9 +98,8 @@ func BenchmarkReadList(b *testing.B) {
 		b.Run(fmt.Sprintf("rows=%d", size), func(b *testing.B) {
 			query := fmt.Sprintf("SELECT * FROM bench_candidates LIMIT %d", size)
 			b.ReportAllocs()
-			b.ResetTimer()
 
-			for n := 0; n < b.N; n++ {
+			for b.Loop() {
 				var result []*BenchCandidate
 				if err := DB.Read(ctx, &result, query); err != nil {
 					b.Fatal(err)
@@ -116,9 +115,8 @@ func BenchmarkReadOne(b *testing.B) {
 	require.NoError(b, seedBenchCandidates(ctx, 1000))
 
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		var result BenchCandidate
 		if err := DB.Read(ctx, &result, "SELECT * FROM bench_candidates LIMIT 1"); err != nil {
 			b.Fatal(err)

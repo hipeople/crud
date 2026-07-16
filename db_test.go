@@ -5,7 +5,7 @@ import (
 )
 
 func BenchmarkExecutingSQL(b *testing.B) {
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		_, err := DB.Client.Exec("SHOW TABLES LIKE 'shouldnotexist'")
 		if err != nil {
 			panic(err)

@@ -22,9 +22,8 @@ func benchRecord() BenchCandidate {
 func BenchmarkGetRowValues(b *testing.B) {
 	rec := benchRecord()
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if _, err := crud.GetRowValuesOf(rec); err != nil {
 			b.Fatal(err)
 		}
@@ -37,9 +36,8 @@ func BenchmarkGetRowValues(b *testing.B) {
 func BenchmarkNewRow(b *testing.B) {
 	rec := benchRecord()
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if _, err := crud.NewRow(rec); err != nil {
 			b.Fatal(err)
 		}
@@ -54,9 +52,8 @@ func BenchmarkUpdateValueSet(b *testing.B) {
 	rec := benchRecord()
 
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		_ = table.SQLUpdateValueSet(rec)
 	}
 }
@@ -72,9 +69,8 @@ func BenchmarkBulkCreate(b *testing.B) {
 	}
 
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if err := DB.BulkCreate(ctx, batch); err != nil {
 			b.Fatal(err)
 		}

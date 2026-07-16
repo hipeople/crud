@@ -62,9 +62,8 @@ type wWide struct {
 func BenchmarkValuesForRecord(b *testing.B) {
 	rec := wWide{Id: 1, C01: "a", C05: "b", I01: 7, B01: 7000, Bo01: true, S01: "c", Org: 3, Role: 42}
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if _, _, _, err := valuesForRecord(rec); err != nil {
 			b.Fatal(err)
 		}
