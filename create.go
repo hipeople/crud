@@ -5,11 +5,10 @@ import (
 	stdsql "database/sql"
 	"errors"
 	"fmt"
-	"maps"
 	"reflect"
-	"slices"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/hipeople/crud/v2/meta"
 	"github.com/hipeople/crud/v2/sql"
 )
 
@@ -115,22 +114,33 @@ func replaceAndRead(ctx context.Context, exec ExecFn, query QueryFn, record inte
 }
 
 func valuesForRecord(record interface{}) (*Row, []string, []interface{}, error) {
-	row, err := NewRow(record)
+	table, err := NewTable(record)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	sqlValues := row.SQLValues()
-	columns := make([]string, 0, len(sqlValues))
-	values := make([]interface{}, 0, len(sqlValues))
+	// insertPlan is precomputed once per type (columns pre-sorted by name), so
+	// this is a single field walk with no per-record map build or sort.
+	plan := table.insertPlan
+	rv := meta.ValueOf(record)
 
-	for _, c := range slices.Sorted(maps.Keys(sqlValues)) {
-		v := sqlValues[c]
-		columns = append(columns, c)
-		values = append(values, v)
+	columns := make([]string, 0, len(plan))
+	values := make([]interface{}, 0, len(plan))
+
+	for _, entry := range plan {
+		value := rv.Field(entry.index).Interface()
+
+		if entry.autoIncSkip {
+			if n, ok := value.(int); ok && n == 0 {
+				continue
+			}
+		}
+
+		columns = append(columns, entry.column)
+		values = append(values, value)
 	}
 
-	return row, columns, values, nil
+	return &Row{SQLTableName: table.SQLName}, columns, values, nil
 }
 
 func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {

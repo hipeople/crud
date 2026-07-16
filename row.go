@@ -1,5 +1,11 @@
 package crud
 
+import (
+	"reflect"
+
+	"github.com/hipeople/crud/v2/meta"
+)
+
 type RowValue struct {
 	SQLColumn string
 	Value     interface{}
@@ -21,20 +27,16 @@ func (row *Row) SQLValues() map[string]interface{} {
 }
 
 func NewRow(st interface{}) (*Row, error) {
-	values, err := GetRowValuesOf(st)
+	table, err := NewTable(st)
 	if err != nil {
 		return nil, err
 	}
 
-	tableName := SQLTableNameOf(st)
-
-	if customTableName, ok := LookupCustomTableName(st); ok {
-		tableName = customTableName
-	}
-
+	// SQLName already resolves any custom table-name option (SQLTableNameOf
+	// checks it first), so no separate LookupCustomTableName pass is needed.
 	return &Row{
-		SQLTableName: tableName,
-		Values:       values,
+		SQLTableName: table.SQLName,
+		Values:       rowValuesFromPlan(table.rowPlan, meta.ValueOf(st)),
 	}, nil
 }
 
@@ -42,12 +44,42 @@ func NewRow(st interface{}) (*Row, error) {
 // struct field. It's useful for extracting values and corresponding SQL meta information
 // from structs representing database tables.
 func GetRowValuesOf(st interface{}) ([]*RowValue, error) {
-	fields, err := CollectRows(st, []*RowValue{})
+	table, err := NewTable(st)
 	if err != nil {
 		return nil, err
 	}
 
-	return fields, nil
+	return rowValuesFromPlan(table.rowPlan, meta.ValueOf(st)), nil
+}
+
+// rowValuesFromPlan reads the insertable field values off record in the plan's
+// (struct-field) order, skipping a zero explicit-auto-increment int PK so the
+// database assigns it. rv must be the indirected struct value.
+func rowValuesFromPlan(plan []rowPlanEntry, rv reflect.Value) []*RowValue {
+	// One backing array for the RowValue structs instead of a heap allocation
+	// per field; values holds pointers into it.
+	backing := make([]RowValue, len(plan))
+	values := make([]*RowValue, 0, len(plan))
+
+	i := 0
+	for _, entry := range plan {
+		value := rv.Field(entry.index).Interface()
+
+		if entry.autoIncSkip {
+			if n, ok := value.(int); ok && n == 0 {
+				continue
+			}
+		}
+
+		backing[i] = RowValue{
+			SQLColumn: entry.column,
+			Value:     value,
+		}
+		values = append(values, &backing[i])
+		i++
+	}
+
+	return values
 }
 
 func CollectRows(st interface{}, rows []*RowValue) ([]*RowValue, error) {
