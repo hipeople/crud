@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/hipeople/crud/v2/meta"
@@ -154,28 +155,6 @@ func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 		return nil, err
 	}
 
-	// Build INSERT ... ON DUPLICATE KEY UPDATE query
-	query := fmt.Sprintf("INSERT INTO `%s` ", row.SQLTableName)
-
-	// Add column names
-	query += "("
-	for i, col := range columns {
-		if i > 0 {
-			query += ", "
-		}
-		query += "`" + col + "`"
-	}
-	query += ") VALUES ("
-
-	// Add placeholders
-	for i := range columns {
-		if i > 0 {
-			query += ", "
-		}
-		query += "?"
-	}
-	query += ") ON DUPLICATE KEY UPDATE "
-
 	// Build map of fields to exclude from updates (primary key and fields with no-update tag)
 	excludeFromUpdate := make(map[string]struct{})
 	if pkField := table.PrimaryKeyField(); pkField != nil {
@@ -187,23 +166,58 @@ func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 		}
 	}
 
+	// Build INSERT ... ON DUPLICATE KEY UPDATE query. A single strings.Builder
+	// avoids the O(n^2) reallocation of the previous per-fragment concatenation.
+	var b strings.Builder
+	b.Grow(len(row.SQLTableName) + 48 + len(columns)*48)
+
+	b.WriteString("INSERT INTO `")
+	b.WriteString(row.SQLTableName)
+	b.WriteString("` (")
+	for i, col := range columns {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteByte('`')
+		b.WriteString(col)
+		b.WriteByte('`')
+	}
+	b.WriteString(") VALUES (")
+	for i := range columns {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteByte('?')
+	}
+	b.WriteString(") ON DUPLICATE KEY UPDATE ")
+
 	// MySQL returns 0 affected rows and doesn't update LastInsertId when all column values match the existing row exactly.
 	// Touch the pk column to force a change so LastInsertId is the affected row's ID, and readLastInsert can re-read.
-	var updateParts []string
+	wrote := false
 	if pk := table.PrimaryKeyField(); pk != nil {
-		updateParts = append(updateParts, fmt.Sprintf("`%s` = LAST_INSERT_ID(`%s`)", pk.SQL.Name, pk.SQL.Name))
+		b.WriteByte('`')
+		b.WriteString(pk.SQL.Name)
+		b.WriteString("` = LAST_INSERT_ID(`")
+		b.WriteString(pk.SQL.Name)
+		b.WriteString("`)")
+		wrote = true
 	}
 	for _, col := range columns {
-		if _, ok := excludeFromUpdate[col]; !ok {
-			updateParts = append(updateParts, fmt.Sprintf("`%s` = VALUES(`%s`)", col, col))
+		if _, ok := excludeFromUpdate[col]; ok {
+			continue
 		}
-	}
-	query += updateParts[0]
-	for i := 1; i < len(updateParts); i++ {
-		query += ", " + updateParts[i]
+		if wrote {
+			b.WriteString(", ")
+		}
+		b.WriteByte('`')
+		b.WriteString(col)
+		b.WriteString("` = VALUES(`")
+		b.WriteString(col)
+		b.WriteString("`)")
+		wrote = true
 	}
 
-	return exec(ctx, query, values...)
+	return exec(ctx, b.String(), values...)
 }
 
 func upsert(ctx context.Context, exec ExecFn, record interface{}) error {
