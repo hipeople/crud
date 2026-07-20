@@ -22,10 +22,23 @@ func benchRecord() BenchCandidate {
 func BenchmarkGetRowValues(b *testing.B) {
 	rec := benchRecord()
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if _, err := crud.GetRowValuesOf(rec); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// BenchmarkNewRow isolates the full per-record write metadata path
+// (NewRow: row values + table-name resolution) with no DB round-trip. This is
+// the work Create/Replace/Upsert — and every row of BulkCreate — repeats.
+func BenchmarkNewRow(b *testing.B) {
+	rec := benchRecord()
+	b.ReportAllocs()
+
+	for b.Loop() {
+		if _, err := crud.NewRow(rec); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -39,9 +52,8 @@ func BenchmarkUpdateValueSet(b *testing.B) {
 	rec := benchRecord()
 
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		_ = table.SQLUpdateValueSet(rec)
 	}
 }
@@ -57,9 +69,8 @@ func BenchmarkBulkCreate(b *testing.B) {
 	}
 
 	b.ReportAllocs()
-	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		if err := DB.BulkCreate(ctx, batch); err != nil {
 			b.Fatal(err)
 		}

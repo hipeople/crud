@@ -231,9 +231,8 @@ func BenchmarkRead(b *testing.B) {
 	ctx := context.Background()
 
 	require.NoError(b, CreateUserProfiles(ctx))
-	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var user UserProfile
 		err := DB.Read(ctx, &user, "SELECT * FROM user_profiles LIMIT 1")
 		require.NoError(b, err)
@@ -419,9 +418,8 @@ func BenchmarkReadIter(b *testing.B) {
 	ctx := context.Background()
 
 	require.NoError(b, CreateUserProfiles(ctx))
-	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var users []UserProfile
 		iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
 
@@ -442,8 +440,7 @@ func BenchmarkReadVsReadIter(b *testing.B) {
 	require.NoError(b, CreateUserProfiles(ctx))
 
 	b.Run("Read", func(b *testing.B) {
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			var users []UserProfile
 			err := DB.Read(ctx, &users, "SELECT * FROM user_profiles")
 			require.NoError(b, err)
@@ -452,8 +449,7 @@ func BenchmarkReadVsReadIter(b *testing.B) {
 	})
 
 	b.Run("ReadIter", func(b *testing.B) {
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			var users []UserProfile
 			iter := DB.ReadIter(ctx, &users, "SELECT * FROM user_profiles")
 

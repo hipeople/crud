@@ -5,11 +5,11 @@ import (
 	stdsql "database/sql"
 	"errors"
 	"fmt"
-	"maps"
 	"reflect"
-	"slices"
+	"strings"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/hipeople/crud/v2/meta"
 	"github.com/hipeople/crud/v2/sql"
 )
 
@@ -115,22 +115,33 @@ func replaceAndRead(ctx context.Context, exec ExecFn, query QueryFn, record inte
 }
 
 func valuesForRecord(record interface{}) (*Row, []string, []interface{}, error) {
-	row, err := NewRow(record)
+	table, err := NewTable(record)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	sqlValues := row.SQLValues()
-	columns := make([]string, 0, len(sqlValues))
-	values := make([]interface{}, 0, len(sqlValues))
+	// insertPlan is precomputed once per type (columns pre-sorted by name), so
+	// this is a single field walk with no per-record map build or sort.
+	plan := table.insertPlan
+	rv := meta.ValueOf(record)
 
-	for _, c := range slices.Sorted(maps.Keys(sqlValues)) {
-		v := sqlValues[c]
-		columns = append(columns, c)
-		values = append(values, v)
+	columns := make([]string, 0, len(plan))
+	values := make([]interface{}, 0, len(plan))
+
+	for _, entry := range plan {
+		value := rv.Field(entry.index).Interface()
+
+		if entry.autoIncSkip {
+			if n, ok := value.(int); ok && n == 0 {
+				continue
+			}
+		}
+
+		columns = append(columns, entry.column)
+		values = append(values, value)
 	}
 
-	return row, columns, values, nil
+	return &Row{SQLTableName: table.SQLName}, columns, values, nil
 }
 
 func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (stdsql.Result, error) {
@@ -144,28 +155,6 @@ func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 		return nil, err
 	}
 
-	// Build INSERT ... ON DUPLICATE KEY UPDATE query
-	query := fmt.Sprintf("INSERT INTO `%s` ", row.SQLTableName)
-
-	// Add column names
-	query += "("
-	for i, col := range columns {
-		if i > 0 {
-			query += ", "
-		}
-		query += "`" + col + "`"
-	}
-	query += ") VALUES ("
-
-	// Add placeholders
-	for i := range columns {
-		if i > 0 {
-			query += ", "
-		}
-		query += "?"
-	}
-	query += ") ON DUPLICATE KEY UPDATE "
-
 	// Build map of fields to exclude from updates (primary key and fields with no-update tag)
 	excludeFromUpdate := make(map[string]struct{})
 	if pkField := table.PrimaryKeyField(); pkField != nil {
@@ -177,23 +166,58 @@ func upsertAndGetResult(ctx context.Context, exec ExecFn, record interface{}) (s
 		}
 	}
 
+	// Build INSERT ... ON DUPLICATE KEY UPDATE query. A single strings.Builder
+	// avoids the O(n^2) reallocation of the previous per-fragment concatenation.
+	var b strings.Builder
+	b.Grow(len(row.SQLTableName) + 48 + len(columns)*48)
+
+	b.WriteString("INSERT INTO `")
+	b.WriteString(row.SQLTableName)
+	b.WriteString("` (")
+	for i, col := range columns {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteByte('`')
+		b.WriteString(col)
+		b.WriteByte('`')
+	}
+	b.WriteString(") VALUES (")
+	for i := range columns {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteByte('?')
+	}
+	b.WriteString(") ON DUPLICATE KEY UPDATE ")
+
 	// MySQL returns 0 affected rows and doesn't update LastInsertId when all column values match the existing row exactly.
 	// Touch the pk column to force a change so LastInsertId is the affected row's ID, and readLastInsert can re-read.
-	var updateParts []string
+	wrote := false
 	if pk := table.PrimaryKeyField(); pk != nil {
-		updateParts = append(updateParts, fmt.Sprintf("`%s` = LAST_INSERT_ID(`%s`)", pk.SQL.Name, pk.SQL.Name))
+		b.WriteByte('`')
+		b.WriteString(pk.SQL.Name)
+		b.WriteString("` = LAST_INSERT_ID(`")
+		b.WriteString(pk.SQL.Name)
+		b.WriteString("`)")
+		wrote = true
 	}
 	for _, col := range columns {
-		if _, ok := excludeFromUpdate[col]; !ok {
-			updateParts = append(updateParts, fmt.Sprintf("`%s` = VALUES(`%s`)", col, col))
+		if _, ok := excludeFromUpdate[col]; ok {
+			continue
 		}
-	}
-	query += updateParts[0]
-	for i := 1; i < len(updateParts); i++ {
-		query += ", " + updateParts[i]
+		if wrote {
+			b.WriteString(", ")
+		}
+		b.WriteByte('`')
+		b.WriteString(col)
+		b.WriteString("` = VALUES(`")
+		b.WriteString(col)
+		b.WriteString("`)")
+		wrote = true
 	}
 
-	return exec(ctx, query, values...)
+	return exec(ctx, b.String(), values...)
 }
 
 func upsert(ctx context.Context, exec ExecFn, record interface{}) error {
