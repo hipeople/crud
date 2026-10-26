@@ -131,3 +131,7 @@ func (tx *Tx) Delete(ctx context.Context, record interface{}) error {
 func (tx *Tx) Begin(ctx context.Context, readOnly bool) (*Tx, error) {
 	return nil, fmt.Errorf("can't created nested transactions")
 }
+
+func (tx *Tx) BeginTx(ctx context.Context, opts *stdsql.TxOptions) (*Tx, error) {
+	return nil, fmt.Errorf("can't created nested transactions")
+}

@@ -206,9 +206,14 @@ func (db *DB) BulkDelete(ctx context.Context, records interface{}) error {
 
 // Start a DB transaction. It returns an interface w/ most of the methods DB provides.
 func (db *DB) Begin(ctx context.Context, readOnly bool) (*Tx, error) {
-	client, err := db.Client.BeginTx(ctx, &stdsql.TxOptions{
+	return db.BeginTx(ctx, &stdsql.TxOptions{
 		ReadOnly: readOnly,
 	})
+}
+
+// BeginTx starts a DB transaction with the given options, e.g. a non-default isolation level.
+func (db *DB) BeginTx(ctx context.Context, opts *stdsql.TxOptions) (*Tx, error) {
+	client, err := db.Client.BeginTx(ctx, opts)
 	if err != nil {
 		return nil, err
 	}

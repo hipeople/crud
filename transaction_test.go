@@ -82,3 +82,27 @@ func TestRollback(t *testing.T) {
 
 	DB.DropTables(ctx, UserProfile{})
 }
+
+func TestBeginTxReadCommittedSeesConcurrentCommits(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, CreateUserProfiles(ctx))
+
+	tx, err := DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	assert.Nil(t, err)
+
+	before := UserProfile{}
+	assert.Nil(t, tx.Read(ctx, &before, "SELECT * from user_profiles WHERE id = ?", 2))
+	assert.Equal(t, "Engineer", before.Bio)
+
+	_, err = DB.Exec(ctx, "UPDATE user_profiles SET bio = ? WHERE id = ?", "committed elsewhere", 2)
+	assert.Nil(t, err)
+
+	// A repeatable read transaction would still see "Engineer" here.
+	after := UserProfile{}
+	assert.Nil(t, tx.Read(ctx, &after, "SELECT * from user_profiles WHERE id = ?", 2))
+	assert.Equal(t, "committed elsewhere", after.Bio)
+
+	assert.Nil(t, tx.Commit(ctx))
+	assert.Nil(t, DB.DropTables(ctx, UserProfile{}))
+}
